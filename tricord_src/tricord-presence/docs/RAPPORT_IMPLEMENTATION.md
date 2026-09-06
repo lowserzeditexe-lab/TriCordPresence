@@ -208,6 +208,32 @@ jusqu'à re-test console.
 
 ---
 
+## 0sexies. Correctif fonctionnel — connexion Gateway (horloge TLS) + plugin
+
+Le `log.txt` de la console montre que **le sysmodule fonctionne** : `aptMonitorInit`
+OK, `ipcServerInit` OK, **token TriCord récupéré** OK, détection des jeux OK
+(ex. `tid=00040000001D6900`). Deux problèmes restaient :
+
+**(a) Handshake TLS refusé → pas de connexion Discord.** Log :
+`TLS handshake échoué: -0x2700` (`MBEDTLS_ERR_X509_CERT_VERIFY_FAILED`) +
+`The certificate validity starts in the future`. L'horloge **RTC de la 3DS est
+en retard** sur la date d'émission du certificat Discord → mbedtls le refuse
+(flag `MBEDTLS_X509_BADCERT_FUTURE`). La RTC 3DS n'étant pas fiable, on ajoute un
+**callback de vérification** (`mbedtls_ssl_conf_verify` → `tls_verify_cb`) qui
+efface UNIQUEMENT les bits de validité temporelle (`FUTURE`/`EXPIRED`) tout en
+gardant la vérification de la **chaîne CA** et du **nom d'hôte**. Approche
+standard des clients TLS homebrew (RTC non fiable). TODO(hw) conservé.
+
+**(b) Erreur plugin `0xD8E07402` à chaque jeu.** L'installeur copiait le
+`.3gx` (phase 2) en `sdmc:/luma/plugins/default.3gx` → chargé dans **tous** les
+jeux, refusé par le plugin loader Luma (« Outdated plugin file »). La Rich
+Presence ne dépend PAS de ce plugin. On **n'installe donc plus l'overlay** et
+l'installeur **propose de supprimer** un ancien `default.3gx` résiduel. Overlay
+reste en phase 2 (à ré-outiller avec un 3gxtool au format courant).
+
+---
+
+## 1. Environnement — comment devkitPro a été obtenu
 
 ### Blocage rencontré (documenté comme demandé)
 

@@ -50,8 +50,28 @@ static void gw_mutex_lock(gw_mutex_t *m)   { pthread_mutex_lock(m); }
 static void gw_mutex_unlock(gw_mutex_t *m) { pthread_mutex_unlock(m); }
 static void gw_sleep_ms(u32 ms) { usleep(ms * 1000); }
 static u64  gw_now_ms(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); return (u64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000; }
+
 #define GW_LOG(...) do { printf("[gateway] " __VA_ARGS__); printf("\n"); fflush(stdout); } while (0)
 #endif
+
+/* Callback de vérification X.509 tolérant à l'horloge (code commun 3DS/hôte).
+ *
+ * BUG HARDWARE CONFIRMÉ (log.txt console) : le handshake TLS vers
+ * gateway.discord.gg échouait avec -0x2700 (MBEDTLS_ERR_X509_CERT_VERIFY_FAILED)
+ * et "The certificate validity starts in the future" — l'horloge RTC de la 3DS
+ * est en retard sur la date de validité du certificat Discord. La RTC d'une 3DS
+ * n'est pas fiable/synchronisée : on NE PEUT PAS s'en servir pour valider les
+ * dates TLS. On efface donc UNIQUEMENT les bits de validité temporelle
+ * (BADCERT_FUTURE / BADCERT_EXPIRED) ; la chaîne de confiance (CA embarquées)
+ * et le nom d'hôte (SNI/CN) restent vérifiés normalement. Approche standard des
+ * clients TLS homebrew 3DS (RTC non fiable). Reste TODO(hw) : idéalement
+ * resynchroniser l'horloge, mais le pont ne doit pas dépendre de la RTC. */
+static int tls_verify_cb(void *ctx, mbedtls_x509_crt *crt, int depth, uint32_t *flags) {
+    (void)ctx; (void)crt; (void)depth;
+    *flags &= ~(uint32_t)(MBEDTLS_X509_BADCERT_FUTURE | MBEDTLS_X509_BADCERT_EXPIRED);
+    return 0;
+}
+
 
 #define GW_DEFAULT_HOST   "gateway.discord.gg"
 #define GW_PATH           "/?v=10&encoding=json"
@@ -247,6 +267,9 @@ static bool tls_connect(gw_t *g, const char *host) {
     if (cr > 0) GW_LOG("bundle CA: %d certificat(s) ignoré(s)", cr);
     mbedtls_ssl_conf_ca_chain(&g->conf, &g->cacert, NULL);
     mbedtls_ssl_conf_authmode(&g->conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+    /* Tolérance à l'horloge RTC (voir tls_verify_cb) : la chaîne CA et le nom
+     * d'hôte restent vérifiés, seules les dates de validité sont ignorées. */
+    mbedtls_ssl_conf_verify(&g->conf, tls_verify_cb, NULL);
     mbedtls_ssl_conf_rng(&g->conf, mbedtls_ctr_drbg_random, &g->drbg);
     mbedtls_ssl_conf_min_version(&g->conf, MBEDTLS_SSL_MAJOR_VERSION_3, MBEDTLS_SSL_MINOR_VERSION_3);
 

@@ -248,14 +248,18 @@ int main(int argc, char **argv) {
     ok &= ensureDir("sdmc:/luma/sysmodules");
     ok &= copyFile("romfs:/000401300F000102.cxi", SYSMODULE_DEST);
 
-    printf("\n[2/3] Plugin overlay...\n");
-    ok &= ensureDir("sdmc:/luma/plugins");
+    printf("\n[2/3] Plugin overlay (phase 2 - DESACTIVE)...\n");
+    // L'overlay .3gx (pop-up en jeu) est la PHASE 2. Le format .3gx produit
+    // n'est pas accepte par le plugin loader de Luma recent : installe en
+    // default.3gx, il provoquait l'erreur "Outdated plugin file" (0xD8E07402)
+    // A CHAQUE lancement de jeu. La Rich Presence ne depend PAS de ce plugin
+    // (tout se passe dans le sysmodule) : on NE l'installe donc PAS ici, et on
+    // propose de retirer un ancien default.3gx qui bloquerait les jeux.
+    printf("  Overlay non installe (evite l'erreur 0xD8E07402 en jeu).\n");
     if (fileExists(PLUGIN_DEST)) {
-        printf("  ATTENTION: %s existe deja.\n", PLUGIN_DEST);
-        if (promptYesNo("  Ecraser ce plugin 'default' ?")) ok &= copyFile("romfs:/tricord_overlay.3gx", PLUGIN_DEST);
-        else printf("  ignore (l'overlay ne sera pas installe).\n");
-    } else {
-        ok &= copyFile("romfs:/tricord_overlay.3gx", PLUGIN_DEST);
+        printf("  Un %s existe deja.\n", PLUGIN_DEST);
+        if (promptYesNo("  Le supprimer (recommande, stoppe l'erreur en jeu) ?"))
+            ok &= removeIfExists(PLUGIN_DEST);
     }
 
     printf("\n[3/3] Configuration...\n");

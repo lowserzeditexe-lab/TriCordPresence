@@ -1,0 +1,58 @@
+[0] tricord_presenced start
+[0] aptMonitorInit rc=00000000
+[0] ipcServerInit rc=00000000
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] discordGatewayInit rc=00000000
+[0] state kind=2 tid=000400000F000200 name=Title 000400000F000200
+[0] connexion à gateway.discord.gg
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 5000 ms
+[0] state kind=1 tid=0000000000000000 name=
+[0] connexion à gateway.discord.gg
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 10000 ms
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] connexion à gateway.discord.gg
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 20000 ms
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] connexion à gateway.discord.gg
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 40000 ms
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] connexion à gateway.discord.gg
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 80000 ms
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] state kind=2 tid=00040000001D6900 name=Title 00040000001D6900
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] connexion à gateway.discord.gg
+[0] TLS handshake échoué: -0x2700
+[0] certificat refusé:
+  The certificate validity starts in the future
+
+[0] reconnexion dans 80000 ms
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)
+[0] state kind=1 tid=0000000000000000 name=
+[0] Token récupéré depuis le compte TriCord actif (aucune saisie utilisateur)

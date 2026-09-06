@@ -1,0 +1,36 @@
+{
+  "summary": "Completed regression testing after .cia rebuild. All backend API endpoints and frontend UI elements verified successfully. The rebuilt installer file (sha256: e5e447f0..., size: 1692608 bytes) is being served correctly, replacing the previous version (sha256: 54af0134...).",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/installer/info returns JSON with correct size (1692608) and sha256 (e5e447f013568826204a582e54e6a47a191c034a6e3b914971a5293f96f4f5af)",
+    "Backend: GET /api/download/tricord-presence-installer.cia returns 200, Content-Type application/octet-stream, Content-Length 1692608, downloaded file hashes to correct sha256",
+    "Backend: HEAD /api/download/tricord-presence-installer.cia returns 200 with Content-Length 1692608",
+    "Backend: GET /api/download/unknown.cia returns 404 as expected",
+    "Frontend: Page loads successfully without errors",
+    "Frontend: QR canvas renders correctly in [data-testid=qr-frame]",
+    "Frontend: Download URL displayed in [data-testid=download-url] with correct absolute URL",
+    "Frontend: SHA-256 hash (e5e447f0...) displayed correctly in [data-testid=info-sha256]",
+    "Frontend: File size (1.61 Mo), filename, and version (v2) displayed correctly"
+  ],
+  "test_report_links": [
+    "/app/backend/backend_test.py"
+  ],
+  "success_percentage": {
+    "backend": "100% (4/4 tests passed)",
+    "frontend": "100% (8/8 tests passed)"
+  },
+  "updated_files": [
+    "/app/backend/backend_test.py"
+  ],
+  "action_item_for_main_agent": "",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}
