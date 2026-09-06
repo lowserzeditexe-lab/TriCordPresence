@@ -44,17 +44,24 @@ AccessControlInfo:
   PermitMainFunctionArgument    : true
   CanShareDeviceMemory          : true
   RunnableOnSleep               : false
-  SpecialMemoryArrange          : true
+  # HOME Menu crash au lancement (crash_dump_00000011, process "menu"
+  # 0004003000009802) : l'exheader héritait de pnp_launcher des privilèges
+  # ANORMAUX pour une Application lancée depuis le HOME Menu (SpecialMemoryArrange,
+  # mapping VRAM 1f000000, IO 1ff00000, svc Backdoor). Ils ne sont JAMAIS utilisés
+  # par cet installeur (il ne fait que copier des fichiers via fs:DirectSdmc puis
+  # svcControlService 0xB0 — extension Luma, non soumise au masque SVC ni à
+  # Backdoor). On repasse donc sur un exheader d'Application standard : PM/HOME
+  # Menu peut lancer le titre sans échec. (Retirés : SpecialMemoryArrange=true,
+  # IORegisterMapping, MemoryMapping, Backdoor.)
+  SpecialMemoryArrange          : false
 
   SystemModeExt                 : Legacy
   CpuSpeed                      : 268MHz
   EnableL2Cache                 : false
   CanAccessCore2                : false
 
-  IORegisterMapping:
-   - 1ff00000-1ff7ffff
-  MemoryMapping:
-   - 1f000000-1f5fffff:r
+  # (Pas d'IORegisterMapping ni de MemoryMapping : inutiles pour un installeur
+  #  CLI de copie de fichiers, et sources probables du crash HOME Menu.)
 
   # svcControlService (0xB0, extension Luma3DS) n'est pas soumis à ce masque
   # (SVC >= 0x80 gérés par l'extension kernel) : idem pnp_launcher.rsf.
@@ -110,7 +117,6 @@ AccessControlInfo:
     UnmapMemoryBlock: 32
     WaitSynchronization1: 36
     WaitSynchronizationN: 37
-    Backdoor: 123
 
   ServiceAccessControl:
    - cfg:u

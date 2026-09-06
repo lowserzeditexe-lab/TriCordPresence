@@ -173,7 +173,41 @@ inchangés. Statut : `TODO(hw)` jusqu'à re-test console.
 
 ---
 
-## 1. Environnement — comment devkitPro a été obtenu
+## 0quinquies. Correctif crash #11 — HOME Menu au lancement (exheader installeur)
+
+**Symptôme (console)** : « au lancement de l'homebrew » (dès qu'on démarre
+l'installeur depuis le HOME Menu, avant toute interaction), crash. Le dump
+`crash_dump_00000011` a pour **process fautif `menu`, Title ID
+`0004003000009802`** = le **HOME Menu USA** (Nintendo), PAS notre sysmodule
+(les symboles mbedtls affichés par le parseur sont un faux positif : ils
+proviennent du mapping sur NOTRE ELF, non pertinent pour le process menu).
+Cela confirme au passage que les 3 crashes précédents du sysmodule sont
+franchis (le crash « avance » à chaque itération).
+
+**Cause racine** : l'exheader de l'installeur
+(`installer/tricord-presence-installer.rsf`), hérité de `pnp_launcher`,
+réclamait pour une **Application** lancée par le HOME Menu des privilèges
+**anormaux** et **inutilisés** : `SpecialMemoryArrange: true`, mapping VRAM
+`MemoryMapping: 1f000000-1f5fffff`, `IORegisterMapping: 1ff00000-1ff7ffff`, et
+le SVC `Backdoor` (0x7B). PM/HOME Menu échoue/plante en préparant le lancement
+d'un titre « Application » qui demande ces accès kernel.
+
+Vérifié dans le code : l'installeur n'utilise **aucun** de ces privilèges — il
+copie des fichiers via `fs:DirectSdmc` puis lance le sysmodule via
+`svcControlService` (SVC 0xB0, **extension Luma3DS non soumise au masque SVC ni
+à Backdoor**). Ces entrées étaient donc du copier-coller mort.
+
+**Correctif** : exheader ramené à une **Application standard** —
+`SpecialMemoryArrange: false`, suppression d'`IORegisterMapping`,
+`MemoryMapping` et `Backdoor`. Le reste (services, dépendances NATIVE_FIRM,
+`fs:DirectSdmc`, SVCs usuels, `svcControlService` pour le lancement à chaud) est
+conservé. Vérifié sur le CXI reconstruit (ctrtool) : `Memory Type: APPLICATION`,
+`Special memory: NO`, plus aucun mapping IO/VRAM. Le lancement à chaud du
+sysmodule reste fonctionnel (0xB0 indépendant du masque). Statut : `TODO(hw)`
+jusqu'à re-test console.
+
+---
+
 
 ### Blocage rencontré (documenté comme demandé)
 
