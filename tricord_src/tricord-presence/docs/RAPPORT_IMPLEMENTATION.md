@@ -136,6 +136,44 @@ de sûreté). À réévaluer si l'on décide de cibler explicitement `Luma3DS-au
 
 ---
 
+## 0quater. Correctif crash #10 — `.init_array` appelé à NULL
+
+**Symptôme (console)** : après les correctifs de tas, un 3ᵉ dump
+(`crash_dump_00000010`) montre un crash **différent** (donc les fixes tas ont
+bien débloqué le démarrage) :
+- `pc = 0x00000000`, exception « prefetch abort », `lr = 0x00155614`,
+  `sp = 0x00177ff0` (exécution avancée, on n'est plus dans l'init du tas).
+- `0x155614` est dans **`__libc_init_array`**, juste après le `blx r3`
+  (`0x155610`) qui appelle un pointeur de `.init_array`. `r5 = 0x00175df0` =
+  `__init_array_start`. Donc `.init_array[0]` valait **0** → saut à l'adresse 0.
+
+**Cause racine** : le CXI contient pourtant la bonne valeur
+(`.init_array[0] = 0x00100dc0 = frame_dummy`, vérifié en extrayant le code-set
+du CXI). Mais `.init_array`/`.fini_array` sont placés dans la **dernière page
+partielle du segment RW** (fin de `.data`, juste avant `.bss`). Le loader NCCH
+de Luma3DS **zéro-remplit cette fin de page** au chargement → à l'exécution
+`.init_array[0] = 0`. `__libc_init_array()` déréférence alors un pointeur nul,
+**avant `main()`**.
+
+**Correctif** : ce sysmodule est en **C pur** ; la seule entrée d'`.init_array`
+est `frame_dummy` (frames d'exception C++ via `__register_frame_info`), inutile
+ici. On **vide `.init_array`/`.fini_array`** au lien :
+- `sysmodule/tricord_sysmodule.ld` = copie de `3dsx.ld` sans les
+  `KEEP(*(.init_array*))`/`KEEP(*(.fini_array*))` (symboles
+  `__init_array_start/end` conservés et **égaux**).
+- `sysmodule/tricord.specs` = copie de `3dsx.specs` **sans** son `-T 3dsx.ld`
+  (script fourni explicitement pour éviter tout doublon de `SECTIONS`).
+- `Makefile` : `LDFLAGS` → ce specs + `-Wl,-T,tricord_sysmodule.ld` ; et on
+  retire `-nocodepadding` de `makerom` (pagination des code-sets, par sécurité).
+
+Résultat : `__init_array_start == __init_array_end` → `__libc_init_array`
+boucle **0 fois**, plus aucun `blx` sur pointeur nul. Vérifié dans le nouvel
+ELF (sections `.init_array`/`.fini_array` vides). Title ID du CXI et `ps:ps`
+inchangés. Statut : `TODO(hw)` jusqu'à re-test console.
+
+---
+
+## 1. Environnement — comment devkitPro a été obtenu
 
 ### Blocage rencontré (documenté comme demandé)
 

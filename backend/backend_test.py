@@ -7,8 +7,8 @@ class CIAInstallerAPITester:
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
-        self.expected_sha256 = "41b26813b685a0e1c328e864d638076ee40c635fe8e6f44b2dd5c2a799754f4a"
-        self.expected_size = 1688512
+        self.expected_sha256 = "2f7e875283e037a56eccb558b4ed61d04f324e1fb976b6bdfb15b955d8e671a5"
+        self.expected_size = 1692608
         self.expected_filename = "tricord-presence-installer.cia"
 
     def run_test(self, name, test_func):

@@ -23,9 +23,15 @@ CFLAGS  := -g -Wall -O2 -mword-relocations \
 CFLAGS  += $(INCLUDE)
 CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 ASFLAGS := -g $(ARCH)
-# Même schéma que Luma3DS sysmodules/rosalina/Makefile : ELF "3dsx.specs" puis
-# makerom -f ncch. -Wl,--gc-sections pour réduire la taille .code (pas de romfs).
-LDFLAGS := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map),--gc-sections
+# Schéma Luma3DS sysmodules/rosalina : ELF puis makerom -f ncch.
+# On utilise un specs LOCAL (tricord.specs) qui remplace le script de lien
+# 3dsx.ld par tricord_sysmodule.ld (copie de 3dsx.ld avec .init_array/
+# .fini_array VIDÉS). Raison (crash_dump_00000010) : le loader NCCH de Luma
+# zéro-remplissait la fin du segment RW où tombaient ces tableaux, si bien que
+# __libc_init_array() appelait un pointeur nul (blx r3=0, pc=0) avant main().
+# frame_dummy (seule entrée d'.init_array) sert l'unwinding C++, inutile ici.
+# -Wl,-L,$(TOPDIR) : pour que ld trouve tricord_sysmodule.ld.
+LDFLAGS := -specs=$(TOPDIR)/tricord.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map),--gc-sections -Wl,-T,$(TOPDIR)/tricord_sysmodule.ld
 
 # wslay (WebSocket) + mbedtls (TLS) + jansson (JSON) viennent des portlibs
 # devkitPro (paquets 3ds-wslay, 3ds-mbedtls, 3ds-jansson).
@@ -67,12 +73,16 @@ else
 DEPENDS := $(OFILES:.o=.d)
 
 # Sysmodule = ELF puis converti en CXI via makerom, PAS un .3dsx classique.
-# Commande identique à celle de Luma3DS pour rosalina (-f ncch -nocodepadding).
+# NOTE (crash_dump_00000010) : on N'utilise PAS -nocodepadding. Sans padding, le
+# code-set "data" se termine en page partielle (0x1df8) et le loader NCCH de
+# Luma3DS zéro-remplit la fin de cette page — où tombent .init_array/.fini_array.
+# __libc_init_array() appelait alors un pointeur nul (blx r3=0, pc=0) AVANT main.
+# En paginant les code-sets, .init_array (frame_dummy) est chargé correctement.
 all: $(OUTPUT).elf $(TOPDIR)/$(TITLE_ID).cxi
 
 $(TOPDIR)/$(TITLE_ID).cxi: $(OUTPUT).elf $(RSF)
 	@echo makerom $(notdir $@)
-	@makerom -f ncch -rsf $(RSF) -DUNIQUE_ID=$(UNIQUE_ID) -nocodepadding -o $@ -elf $<
+	@makerom -f ncch -rsf $(RSF) -DUNIQUE_ID=$(UNIQUE_ID) -o $@ -elf $<
 
 $(OUTPUT).elf: $(OFILES)
 
