@@ -1,8 +1,10 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import hashlib
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -13,6 +15,29 @@ from datetime import datetime, timezone
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# --- TriCord Presence installer (.cia) served for FBI QR remote install ------
+FILES_DIR = ROOT_DIR / "files"
+CIA_FILENAME = "tricord-presence-installer.cia"
+CIA_PATH = FILES_DIR / CIA_FILENAME
+# Title version declared in sysmodule/tricord_presenced.rsf (Version: 2)
+INSTALLER_VERSION = "2"
+
+
+def _compute_cia_meta():
+    """Return metadata for the built .cia (size + sha256), or None if missing."""
+    if not CIA_PATH.exists():
+        return None
+    h = hashlib.sha256()
+    size = 0
+    with open(CIA_PATH, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+            size += len(chunk)
+    return {"size": size, "sha256": h.hexdigest()}
+
+
+_CIA_META = _compute_cia_meta()
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -41,6 +66,41 @@ class StatusCheckCreate(BaseModel):
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@api_router.get("/installer/info")
+async def installer_info():
+    """Metadata for the TriCord Presence .cia so the frontend can build the
+    QR code (FBI remote install) and show file details."""
+    meta = _CIA_META or _compute_cia_meta()
+    if not meta:
+        raise HTTPException(status_code=404, detail="installer .cia not built yet")
+    return {
+        "filename": CIA_FILENAME,
+        "title": "TriCord Presence Installer",
+        "version": INSTALLER_VERSION,
+        "size": meta["size"],
+        "sha256": meta["sha256"],
+        # Relative path; the frontend prepends REACT_APP_BACKEND_URL to build
+        # the absolute URL encoded in the QR code scanned by FBI.
+        "download_path": f"/api/download/{CIA_FILENAME}",
+    }
+
+
+@api_router.api_route("/download/{filename}", methods=["GET", "HEAD"])
+async def download_cia(filename: str):
+    """Serve the built .cia as a raw binary download. FBI's 'Scan QR Code'
+    remote-install downloads the file directly from this URL."""
+    if filename != CIA_FILENAME:
+        raise HTTPException(status_code=404, detail="unknown file")
+    if not CIA_PATH.exists():
+        raise HTTPException(status_code=404, detail="installer .cia not built yet")
+    return FileResponse(
+        path=str(CIA_PATH),
+        media_type="application/octet-stream",
+        filename=CIA_FILENAME,
+        headers={"Cache-Control": "no-cache"},
+    )
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
