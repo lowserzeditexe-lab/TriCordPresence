@@ -33,10 +33,29 @@
 // --- Surcharges libctru pour un contexte sysmodule -----------------------
 // libctru (system/allocateHeaps.c) autorise à fixer la taille des heaps ;
 // par défaut il prendrait toute la mémoire "application" disponible, ce qui
-// est faux pour un process de type System. 3 MiB suffisent pour TLS (2x16K
-// buffers mbedtls) + base de titres (~500 KiB) + SOC (0x60000).
-u32 __ctru_heap_size        = 0x300000;
-u32 __ctru_linear_heap_size = 0;
+// est faux pour un process de type System.
+//
+// CRASH HARDWARE CONFIRMÉ (crash_dump_00000007, 3DS réelle) — NE PAS remettre
+// __ctru_linear_heap_size à 0 :
+//   Chaîne du crash : initSystem -> __libctru_init -> __system_allocateHeaps
+//   -> svcBreak(PANIC), AVANT même main() (sp à 0x0FFFFFC0, ~64 o utilisés).
+//   Cause : __system_allocateHeaps interprète __ctru_linear_heap_size == 0
+//   comme « auto = alloue TOUT le reste de la mémoire committable du process
+//   au tas linéaire » (désassemblage : `cmp r1,#0` puis `subeq r2,r2,r3`).
+//   Pour un process System/sysapplet, ce « reste » auto dépasse ce que
+//   svcControlMemory peut réellement committer -> le 2e svcControlMemory
+//   (tas linéaire) échoue -> svcBreak (LR du dump = __system_allocateHeaps
+//   +0x1a8, juste après ce svcControlMemory).
+//
+// Correctif : tailles explicites. Le 1er svcControlMemory (tas principal,
+// 3 MiB) avait RÉUSSI sur la console -> on sait que ~3 MiB sont committables.
+// On garde donc un total de 3 MiB (2.75 MiB principal + 0.25 MiB linéaire)
+// pour ne jamais redemander plus que ce montant empiriquement validé.
+// Le tas principal (memalign) porte le buffer soc:U (1 MiB), la base de
+// titres, les buffers TLS mbedtls et jansson ; rien n'utilise linearAlloc,
+// d'où un tas linéaire volontairement petit mais NON nul.
+u32 __ctru_heap_size        = 0x2C0000; // 2.75 MiB
+u32 __ctru_linear_heap_size = 0x40000;  // 256 KiB (explicite, jamais 0)
 
 // libctru appelle par défaut aptInit()/hidInit() dans __appInit : un
 // sysmodule n'est pas une applet APT, on n'initialise que srv + fs + le

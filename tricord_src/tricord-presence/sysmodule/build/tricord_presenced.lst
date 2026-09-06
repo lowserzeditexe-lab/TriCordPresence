@@ -1472,87 +1472,87 @@
 00173de4 R __exidx_end
 00173de4 R __exidx_start
 00174000 00000004 d s_aptServiceIdx
-00174004 00000004 D __ctru_heap_size
-00174008 00000004 d do_free
-0017400c 00000004 d do_malloc
-00174010 00000008 d the_false.1
-00174018 00000008 d the_null.0
-00174020 00000008 d the_true.2
-00174028 00000080 d soc_devoptab
-001740a8 W __stacksize__
-001740ac 00000004 D _impure_ptr
-001740b0 00000200 D _impure_data
-001742b0 00000254 D __global_locale
-00174504 00000004 D __malloc_sbrk_base
-00174508 00000004 D __malloc_trim_threshold
-00174510 00000408 D __malloc_av_
-00174918 0000000c D __sglue
-00174924 00000400 d _current_working_directory
-00174d28 00001000 d handles
-00175d28 0000000c d __stderr_handle
-00175d34 0000000c d __stdout_handle
-00175d40 0000000c d __stdin_handle
-00175d4c 0000008c D devoptab_list
-00175dd8 00000004 d defaultDevice
-00175de4 d _GLOBAL_OFFSET_TABLE_
-00175df0 d __frame_dummy_init_array_entry
-00175df0 D __init_array_start
-00175df0 B __preinit_array_end
-00175df0 B __preinit_array_start
-00175df0 D __tdata_lma
-00175df0 D __tdata_lma_end
-00175df4 d __do_global_dtors_aux_fini_array_entry
-00175df4 D __fini_array_start
-00175df4 D __init_array_end
-00175df8 D __bss_start__
-00175df8 D __fini_array_end
-00175df8 00000004 b s_numExcludes
-00175e00 00000200 b s_excludes
-00176000 00000004 b s_presenceLock
-00176004 00000001 b s_presenceDirty
-00176005 00000001 b s_presenceValid
-00176008 00000100 b s_token
-00176108 00000050 b s_presence
-00176158 00000988 b s_gw
-00176ae0 00000008 b s_lastPresenceSentAt
-00176ae8 00000001 b s_threadRunning
-00176aec 00000004 b s_socBuffer
-00176af0 00000004 b s_thread
-00176af8 00000001 b s_running
-00176afc 00000004 b s_numSessions
-00176b00 00000014 b s_handles
-00176b14 00000004 b s_port
-00176b18 00000004 b s_stateLock
-00176b20 00000050 b s_lastState
-00176b70 00000004 b s_thread
-00176b74 00000004 b s_lock
-00176b78 00000050 b g_state
-00176bc8 00000004 B __ctru_linear_heap_size
-00176bcc 00000004 b s_names
-00176bd0 00000004 b s_entries
-00176bd4 00000004 b s_count
-00176bd8 00000001 b s_psInitialized
-00176bd9 b completed.1
-00176bdc b object.0
-00176bf4 00000004 b debug_threshold
-00176bf8 00000004 b supported_init
-00176bfc 00000250 b supported_ciphersuites
-00176e4c 00000004 b init_done.0
-00176e50 0000000e b ecp_supported_grp_id
-00176e60 00000004 b aes_init_done
-00176e64 00000028 b round_constants
-00176e8c 00000400 b RT3
-0017728c 00000400 b RT2
-0017768c 00000400 b RT1
-00177a8c 00000400 b RT0
-00177e8c 00000100 b RSb
-00177f8c 00000400 b FT3
-0017838c 00000400 b FT2
-0017878c 00000400 b FT1
-00178b8c 00000400 b FT0
-00178f8c 00000100 b FSb
-0017908c 00000004 B hashtable_seed
-00179090 00000001 b seed_initialized
+00174004 00000004 D __ctru_linear_heap_size
+00174008 00000004 D __ctru_heap_size
+0017400c 00000004 d do_free
+00174010 00000004 d do_malloc
+00174014 00000008 d the_false.1
+0017401c 00000008 d the_null.0
+00174024 00000008 d the_true.2
+0017402c 00000080 d soc_devoptab
+001740ac W __stacksize__
+001740b0 00000004 D _impure_ptr
+001740b8 00000200 D _impure_data
+001742b8 00000254 D __global_locale
+0017450c 00000004 D __malloc_sbrk_base
+00174510 00000004 D __malloc_trim_threshold
+00174518 00000408 D __malloc_av_
+00174920 0000000c D __sglue
+0017492c 00000400 d _current_working_directory
+00174d30 00001000 d handles
+00175d30 0000000c d __stderr_handle
+00175d3c 0000000c d __stdout_handle
+00175d48 0000000c d __stdin_handle
+00175d54 0000008c D devoptab_list
+00175de0 00000004 d defaultDevice
+00175dec d _GLOBAL_OFFSET_TABLE_
+00175df8 d __frame_dummy_init_array_entry
+00175df8 D __init_array_start
+00175df8 B __preinit_array_end
+00175df8 B __preinit_array_start
+00175df8 D __tdata_lma
+00175df8 D __tdata_lma_end
+00175dfc d __do_global_dtors_aux_fini_array_entry
+00175dfc D __fini_array_start
+00175dfc D __init_array_end
+00175e00 D __bss_start__
+00175e00 D __fini_array_end
+00175e00 00000004 b s_numExcludes
+00175e08 00000200 b s_excludes
+00176008 00000004 b s_presenceLock
+0017600c 00000001 b s_presenceDirty
+0017600d 00000001 b s_presenceValid
+00176010 00000100 b s_token
+00176110 00000050 b s_presence
+00176160 00000988 b s_gw
+00176ae8 00000008 b s_lastPresenceSentAt
+00176af0 00000001 b s_threadRunning
+00176af4 00000004 b s_socBuffer
+00176af8 00000004 b s_thread
+00176b00 00000001 b s_running
+00176b04 00000004 b s_numSessions
+00176b08 00000014 b s_handles
+00176b1c 00000004 b s_port
+00176b20 00000004 b s_stateLock
+00176b28 00000050 b s_lastState
+00176b78 00000004 b s_thread
+00176b7c 00000004 b s_lock
+00176b80 00000050 b g_state
+00176bd0 00000004 b s_names
+00176bd4 00000004 b s_entries
+00176bd8 00000004 b s_count
+00176bdc 00000001 b s_psInitialized
+00176bdd b completed.1
+00176be0 b object.0
+00176bf8 00000004 b debug_threshold
+00176bfc 00000004 b supported_init
+00176c00 00000250 b supported_ciphersuites
+00176e50 00000004 b init_done.0
+00176e54 0000000e b ecp_supported_grp_id
+00176e64 00000004 b aes_init_done
+00176e68 00000028 b round_constants
+00176e90 00000400 b RT3
+00177290 00000400 b RT2
+00177690 00000400 b RT1
+00177a90 00000400 b RT0
+00177e90 00000100 b RSb
+00177f90 00000400 b FT3
+00178390 00000400 b FT2
+00178790 00000400 b FT1
+00178b90 00000400 b FT0
+00178f90 00000100 b FSb
+00179090 00000004 B hashtable_seed
+00179094 00000001 b seed_initialized
 00179098 000005c0 b archive_devices
 00179658 00000004 b archive_device_cwd
 0017965c 00000001 b archive_initialized

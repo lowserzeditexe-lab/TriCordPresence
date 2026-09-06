@@ -1,0 +1,40 @@
+{
+  "summary": "REGRESSION TEST PASSED: Verified the rebuilt .cia file (with heap size fix) is correctly served by all backend endpoints and displayed in the frontend. All APIs return the NEW sha256 hash (456796fb...) and correct file size (1688512 bytes).",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/installer/info returns JSON with size=1688512 and sha256=456796fbd7df27800aed01e6ae10396e8a7cf8cd6e223bdb03ec3ae0b69da979",
+    "Backend: GET /api/download/tricord-presence-installer.cia returns 200, Content-Type=application/octet-stream, Content-Length=1688512, body hashes to NEW sha256",
+    "Backend: HEAD /api/download/tricord-presence-installer.cia returns 200 with Content-Length=1688512",
+    "Backend: GET /api/download/unknown.cia returns 404 as expected",
+    "Frontend: Page loads without errors",
+    "Frontend: QR code canvas rendered in [data-testid=qr-frame]",
+    "Frontend: Download URL displayed correctly in [data-testid=download-url]",
+    "Frontend: NEW SHA-256 (456796fb...) displayed in [data-testid=info-sha256]",
+    "Frontend: Version v2 displayed",
+    "Frontend: File size 1.61 Mo displayed",
+    "Frontend: All interactive buttons present (copy URL, copy SHA, manual download)"
+  ],
+  "test_report_links": [
+    "/app/backend/backend_test.py",
+    ".screenshots/frontend-ui.png",
+    ".screenshots/sha256-section.png"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend/backend_test.py"
+  ],
+  "success_percentage": {
+    "backend": "100% (4/4 tests passed)",
+    "frontend": "100% (all UI elements and integrations working)"
+  },
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}

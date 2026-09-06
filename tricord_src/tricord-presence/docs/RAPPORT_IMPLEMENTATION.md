@@ -9,6 +9,49 @@ issue de l'image officielle `devkitpro/devkitarm` (variante arm64).
 
 ---
 
+## 0. Correctif post-crash hardware (crash_dump_00000007) — tas linéaire
+
+**Symptôme (console réelle)** : après installation du `.cia` et lancement de
+l'installeur, en répondant « oui » à « Lancer le sysmodule maintenant (sans
+reboot) ? », la 3DS génère un crash dump Luma3DS.
+
+**Analyse du dump** (format Luma3DS v3.1, ARM11 core 1) :
+- Process fautif = `tricord_presenced`, Title ID `000401300F000102` (le
+  sysmodule lui-même) → **le lancement à chaud a fonctionné**, c'est le
+  sysmodule qui panique **au démarrage**.
+- `sp = 0x0FFFFFC0` (~64 octets utilisés) → crash **avant `main()`**, pendant
+  l'init libctru.
+- Chaîne reconstruite depuis PC/LR/stack (symboles de `tricord_presenced.elf`) :
+  `initSystem → __libctru_init → __system_allocateHeaps → svcBreak(PANIC)`.
+  LR = `0x149e00` = instruction juste après le **2ᵉ** `bl svcBreak` de
+  `__system_allocateHeaps`, c.-à-d. la branche d'échec du **2ᵉ
+  `svcControlMemory`** = allocation du **tas linéaire**.
+
+**Cause racine** : `sysmodule/source/main.c` fixait `__ctru_linear_heap_size = 0`.
+Le désassemblage de `__system_allocateHeaps` montre que libctru interprète
+`0` non pas comme « pas de tas linéaire » mais comme **« auto = alloue TOUTE la
+mémoire restante committable du process »** (`cmp r1,#0` puis `subeq r2,r2,r3`).
+Pour un process `System`/`sysapplet`, ce montant auto dépasse ce que
+`svcControlMemory` peut réellement committer → échec → `svcBreak`.
+
+**Correctif** (`main.c`) : tailles de heap explicites, jamais 0.
+Le 1ᵉʳ `svcControlMemory` (tas principal, 3 MiB) ayant **réussi** sur la
+console, on sait que ~3 MiB sont committables ; on conserve donc un total de
+3 MiB, réparti explicitement :
+```c
+u32 __ctru_heap_size        = 0x2C0000; // 2.75 MiB (memalign : soc 1 MiB, titles, TLS…)
+u32 __ctru_linear_heap_size = 0x40000;  // 256 KiB explicite (rien n'utilise linearAlloc)
+```
+Vérifié statiquement dans le nouvel ELF (`.data`) : `__ctru_linear_heap_size =
+0x40000` (non nul → la branche « auto » fautive n'est plus prise).
+
+**Statut** : le correctif supprime la cause exacte du crash observé, mais reste
+`TODO(hw)` tant que l'utilisateur n'a pas reconfirmé le démarrage du sysmodule
+sur console (impossible à exécuter dans l'environnement de build).
+
+---
+
+
 ## 1. Environnement — comment devkitPro a été obtenu
 
 ### Blocage rencontré (documenté comme demandé)

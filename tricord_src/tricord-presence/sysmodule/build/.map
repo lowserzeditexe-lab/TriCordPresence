@@ -7499,116 +7499,118 @@ Linker script and memory map
                 0x00173de4                        __exidx_end = .
                 0x00174000                        . = ALIGN (0x1000)
 
-.data           0x00174000     0x1ddc
+.data           0x00174000     0x1de4
  *(.data)
  .data          0x00174000        0x4 apt_monitor.o
- .data          0x00174004        0x4 main.o
-                0x00174004                __ctru_heap_size
+ .data          0x00174004        0x8 main.o
+                0x00174004                __ctru_linear_heap_size
+                0x00174008                __ctru_heap_size
  *(.data.*)
- .data.do_free  0x00174008        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(memory.o)
+ .data.do_free  0x0017400c        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(memory.o)
  .data.do_malloc
-                0x0017400c        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(memory.o)
+                0x00174010        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(memory.o)
  .data.the_false.1
-                0x00174010        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
+                0x00174014        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
  .data.the_null.0
-                0x00174018        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
+                0x0017401c        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
  .data.the_true.2
-                0x00174020        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
+                0x00174024        0x8 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(value.o)
  .data.soc_devoptab
-                0x00174028       0x80 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_init.o)
+                0x0017402c       0x80 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_init.o)
  .data.__stacksize__
-                0x001740a8        0x4 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(stack_adjust.o)
-                0x001740a8                __stacksize__
+                0x001740ac        0x4 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(stack_adjust.o)
+                0x001740ac                __stacksize__
  .data._impure_ptr
-                0x001740ac        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-impure.o)
-                0x001740ac                _impure_ptr
+                0x001740b0        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-impure.o)
+                0x001740b0                _impure_ptr
+ *fill*         0x001740b4        0x4 
  .data._impure_data
-                0x001740b0      0x200 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-impure.o)
-                0x001740b0                _impure_data
+                0x001740b8      0x200 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-impure.o)
+                0x001740b8                _impure_data
  .data.__global_locale
-                0x001742b0      0x254 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-locale.o)
-                0x001742b0                __global_locale
+                0x001742b8      0x254 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-locale.o)
+                0x001742b8                __global_locale
  .data.__malloc_sbrk_base
-                0x00174504        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
-                0x00174504                __malloc_sbrk_base
+                0x0017450c        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
+                0x0017450c                __malloc_sbrk_base
  .data.__malloc_trim_threshold
-                0x00174508        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
-                0x00174508                __malloc_trim_threshold
- *fill*         0x0017450c        0x4 
+                0x00174510        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
+                0x00174510                __malloc_trim_threshold
+ *fill*         0x00174514        0x4 
  .data.__malloc_av_
-                0x00174510      0x408 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
-                0x00174510                __malloc_av_
- .data.__sglue  0x00174918        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-findfp.o)
-                0x00174918                __sglue
+                0x00174518      0x408 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-mallocr.o)
+                0x00174518                __malloc_av_
+ .data.__sglue  0x00174920        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libg.a(libc_a-findfp.o)
+                0x00174920                __sglue
  .data._current_working_directory
-                0x00174924      0x400 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-chdir.o)
- *fill*         0x00174d24        0x4 
- .data.handles  0x00174d28     0x1000 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
+                0x0017492c      0x400 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-chdir.o)
+ *fill*         0x00174d2c        0x4 
+ .data.handles  0x00174d30     0x1000 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
  .data.__stderr_handle
-                0x00175d28        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
+                0x00175d30        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
  .data.__stdout_handle
-                0x00175d34        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
+                0x00175d3c        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
  .data.__stdin_handle
-                0x00175d40        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
+                0x00175d48        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-handle_manager.o)
  .data.devoptab_list
-                0x00175d4c       0x8c /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-iosupport.o)
-                0x00175d4c                devoptab_list
+                0x00175d54       0x8c /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-iosupport.o)
+                0x00175d54                devoptab_list
  .data.defaultDevice
-                0x00175dd8        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-iosupport.o)
+                0x00175de0        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/libsysbase.a(libsysbase_libsysbase_a-iosupport.o)
  *(.gnu.linkonce.d*)
-                0x00175ddc                        . = ALIGN (0x4)
+                0x00175de4                        . = ALIGN (0x4)
 
-.igot.plt       0x00175ddc        0x0
- .igot.plt      0x00175ddc        0x0 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
+.igot.plt       0x00175de4        0x0
+ .igot.plt      0x00175de4        0x0 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
 
-.got            0x00175ddc        0x8
- .got           0x00175ddc        0x8 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
+.got            0x00175de4        0x8
+ .got           0x00175de4        0x8 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
 
-.got.plt        0x00175de4        0xc
- .got.plt       0x00175de4        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
-                0x00175de4                _GLOBAL_OFFSET_TABLE_
+.got.plt        0x00175dec        0xc
+ .got.plt       0x00175dec        0xc /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/../../../../arm-none-eabi/lib/armv6k/fpu/3dsx_crt0.o
+                0x00175dec                _GLOBAL_OFFSET_TABLE_
 
-.tdata          0x00175df0        0x0
-                0x00175df0                        __tdata_lma = .
+.tdata          0x00175df8        0x0
+                0x00175df8                        __tdata_lma = .
  *(.tdata)
  *(.tdata.*)
  *(.gnu.linkonce.td.*)
-                0x00175df0                        . = ALIGN (0x4)
-                0x00175df0                        __tdata_lma_end = .
+                0x00175df8                        . = ALIGN (0x4)
+                0x00175df8                        __tdata_lma_end = .
 
-.tbss           0x00175df0      0xc08
+.tbss           0x00175df8      0xc08
  *(.tbss)
  *(.tbss.*)
  .tbss.__ctru_dev_utf16_buf
-                0x00175df0      0x802 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
-                0x00175df0                __ctru_dev_utf16_buf
- *fill*         0x001765f2        0x2 
+                0x00175df8      0x802 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
+                0x00175df8                __ctru_dev_utf16_buf
+ *fill*         0x001765fa        0x2 
  .tbss.__ctru_dev_path_buf
-                0x001765f4      0x401 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
-                0x001765f4                __ctru_dev_path_buf
+                0x001765fc      0x401 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
+                0x001765fc                __ctru_dev_path_buf
  *(.gnu.linkonce.tb.*)
  *(.tcommon)
-                0x001769f8                        . = ALIGN (0x4)
- *fill*         0x001769f5        0x3 
+                0x00176a00                        . = ALIGN (0x4)
+ *fill*         0x001769fd        0x3 
 
-.preinit_array  0x00175df0        0x0
-                0x00175df0                        PROVIDE (__preinit_array_start = .)
+.preinit_array  0x00175df8        0x0
+                0x00175df8                        PROVIDE (__preinit_array_start = .)
  *(.preinit_array)
-                0x00175df0                        PROVIDE (__preinit_array_end = .)
+                0x00175df8                        PROVIDE (__preinit_array_end = .)
 
-.init_array     0x00175df0        0x4
-                0x00175df0                        PROVIDE (__init_array_start = .)
+.init_array     0x00175df8        0x4
+                0x00175df8                        PROVIDE (__init_array_start = .)
  *(SORT_BY_NAME(.init_array.*))
  *(.init_array)
- .init_array    0x00175df0        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
-                0x00175df4                        PROVIDE (__init_array_end = .)
+ .init_array    0x00175df8        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
+                0x00175dfc                        PROVIDE (__init_array_end = .)
 
-.fini_array     0x00175df4        0x4
-                0x00175df4                        PROVIDE (__fini_array_start = .)
+.fini_array     0x00175dfc        0x4
+                0x00175dfc                        PROVIDE (__fini_array_start = .)
  *(.fini_array)
- .fini_array    0x00175df4        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
+ .fini_array    0x00175dfc        0x4 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
  *(SORT_BY_NAME(.fini_array.*))
-                0x00175df8                        PROVIDE (__fini_array_end = .)
+                0x00175e00                        PROVIDE (__fini_array_end = .)
 
 .ctors
  *crtbegin.o(.ctors)
@@ -7621,56 +7623,55 @@ Linker script and memory map
  *(EXCLUDE_FILE(*crtend.o) .dtors)
  *(SORT_BY_NAME(.dtors.*))
  *(.dtors)
-                0x00175df8                        __bss_start__ = .
+                0x00175e00                        __bss_start__ = .
 
-.bss            0x00175df8     0x6608
+.bss            0x00175e00     0x6600
  *(.dynbss)
  *(.bss)
- .bss           0x00175df8      0x208 apt_monitor.o
- .bss           0x00176000      0xaf4 discord_gateway.o
- *fill*         0x00176af4        0x4 
- .bss           0x00176af8       0x7c ipc_server.o
- .bss           0x00176b74        0x4 log.o
- .bss           0x00176b78       0x54 main.o
-                0x00176bc8                __ctru_linear_heap_size
- .bss           0x00176bcc        0xc title_db.o
- .bss           0x00176bd8        0x1 tricord_account_bridge.o
+ .bss           0x00175e00      0x208 apt_monitor.o
+ .bss           0x00176008      0xaf4 discord_gateway.o
+ *fill*         0x00176afc        0x4 
+ .bss           0x00176b00       0x7c ipc_server.o
+ .bss           0x00176b7c        0x4 log.o
+ .bss           0x00176b80       0x50 main.o
+ .bss           0x00176bd0        0xc title_db.o
+ .bss           0x00176bdc        0x1 tricord_account_bridge.o
  *(.bss.*)
  .bss.completed.1
-                0x00176bd9        0x1 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
- *fill*         0x00176bda        0x2 
- .bss.object.0  0x00176bdc       0x18 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
+                0x00176bdd        0x1 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
+ *fill*         0x00176bde        0x2 
+ .bss.object.0  0x00176be0       0x18 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/crtbegin.o
  .bss.debug_threshold
-                0x00176bf4        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(debug.o)
+                0x00176bf8        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(debug.o)
  .bss.supported_init
-                0x00176bf8        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(ssl_ciphersuites.o)
+                0x00176bfc        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(ssl_ciphersuites.o)
  .bss.supported_ciphersuites
-                0x00176bfc      0x250 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(ssl_ciphersuites.o)
+                0x00176c00      0x250 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedtls.a(ssl_ciphersuites.o)
  .bss.init_done.0
-                0x00176e4c        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(ecp.o)
+                0x00176e50        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(ecp.o)
  .bss.ecp_supported_grp_id
-                0x00176e50        0xe /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(ecp.o)
- *fill*         0x00176e5e        0x2 
+                0x00176e54        0xe /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(ecp.o)
+ *fill*         0x00176e62        0x2 
  .bss.aes_init_done
-                0x00176e60        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+                0x00176e64        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
  .bss.round_constants
-                0x00176e64       0x28 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.RT3       0x00176e8c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.RT2       0x0017728c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.RT1       0x0017768c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.RT0       0x00177a8c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.RSb       0x00177e8c      0x100 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.FT3       0x00177f8c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.FT2       0x0017838c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.FT1       0x0017878c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.FT0       0x00178b8c      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
- .bss.FSb       0x00178f8c      0x100 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+                0x00176e68       0x28 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.RT3       0x00176e90      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.RT2       0x00177290      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.RT1       0x00177690      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.RT0       0x00177a90      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.RSb       0x00177e90      0x100 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.FT3       0x00177f90      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.FT2       0x00178390      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.FT1       0x00178790      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.FT0       0x00178b90      0x400 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
+ .bss.FSb       0x00178f90      0x100 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libmbedcrypto.a(aes.o)
  .bss.hashtable_seed
-                0x0017908c        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(hashtable_seed.o)
-                0x0017908c                hashtable_seed
+                0x00179090        0x4 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(hashtable_seed.o)
+                0x00179090                hashtable_seed
  .bss.seed_initialized
-                0x00179090        0x1 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(hashtable_seed.o)
- *fill*         0x00179091        0x7 
+                0x00179094        0x1 /opt/dkp_root/opt/devkitpro/portlibs/3ds/lib/libjansson.a(hashtable_seed.o)
+ *fill*         0x00179095        0x3 
  .bss.archive_devices
                 0x00179098      0x5c0 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(archive_dev.o)
  .bss.archive_device_cwd
@@ -8058,64 +8059,64 @@ Linker script and memory map
  .debug_abbrev  0x00008027      0x110 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_udivmoddi4.o)
  .debug_abbrev  0x00008137       0x28 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_divsi3.o)
 
-.debug_line     0x00000000    0x1bd69
+.debug_line     0x00000000    0x1bd6b
  *(.debug_line)
  .debug_line    0x00000000      0x875 apt_monitor.o
  .debug_line    0x00000875     0x251c discord_gateway.o
  .debug_line    0x00002d91      0x7de ipc_server.o
  .debug_line    0x0000356f      0x439 log.o
- .debug_line    0x000039a8      0x548 main.o
- .debug_line    0x00003ef0      0x573 title_db.o
- .debug_line    0x00004463      0x820 tricord_account_bridge.o
- .debug_line    0x00004c83     0x1d75 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(archive_dev.o)
- .debug_line    0x000069f8      0x11c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
- .debug_line    0x00006b14     0x1026 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(srv.o)
- .debug_line    0x00007b3a     0x180a /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(synchronization.o)
- .debug_line    0x00009344      0x693 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(thread.o)
- .debug_line    0x000099d7      0xf77 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ac.o)
- .debug_line    0x0000a94e     0x6d10 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(fs.o)
- .debug_line    0x0001165e      0xadd /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ndm.o)
- .debug_line    0x0001213b      0x998 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ps.o)
- .debug_line    0x00012ad3      0x6bc /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(srvpm.o)
- .debug_line    0x0001318f     0x1a60 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(sslc.o)
- .debug_line    0x00014bef      0x1d6 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_common.o)
- .debug_line    0x00014dc5      0x4eb /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_connect.o)
- .debug_line    0x000152b0      0x4a2 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_fcntl.o)
- .debug_line    0x00015752      0x45f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_gethostbyname.o)
- .debug_line    0x00015bb1      0x693 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_init.o)
- .debug_line    0x00016244      0x621 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_poll.o)
- .debug_line    0x00016865      0x204 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_recv.o)
- .debug_line    0x00016a69      0x743 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_recvfrom.o)
- .debug_line    0x000171ac      0x204 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_send.o)
- .debug_line    0x000173b0      0x74c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_sendto.o)
- .debug_line    0x00017afc      0x344 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_socket.o)
- .debug_line    0x00017e40      0x26a /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(decode_utf8.o)
- .debug_line    0x000180aa      0x2da /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(utf16_to_utf8.o)
- .debug_line    0x00018384      0x2ab /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(utf8_to_utf16.o)
- .debug_line    0x0001862f      0x436 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(initArgv.o)
- .debug_line    0x00018a65      0x99d /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(syscalls.o)
- .debug_line    0x00019402      0x78f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(svc.o)
- .debug_line    0x00019b91       0x49 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(readtp.o)
- .debug_line    0x00019bda       0x6f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(stack_adjust.o)
- .debug_line    0x00019c49      0x43d /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(3dslink.o)
- .debug_line    0x0001a086      0x282 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(env.o)
- .debug_line    0x0001a308      0x49b /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(os.o)
- .debug_line    0x0001a7a3      0x190 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(decode_utf16.o)
- .debug_line    0x0001a933      0x18f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(encode_utf16.o)
- .debug_line    0x0001aac2      0x221 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(encode_utf8.o)
- .debug_line    0x0001ace3      0x1c9 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ctru_exit.o)
- .debug_line    0x0001aeac      0x1d4 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ctru_init.o)
- .debug_line    0x0001b080      0x35c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(allocateHeaps.o)
- .debug_line    0x0001b3dc      0x2f2 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(mappable.o)
- .debug_line    0x0001b6ce       0x67 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_udivsi3.o)
- .debug_line    0x0001b735       0x4a /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_dvmd_tls.o)
- .debug_line    0x0001b77f      0x14b /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_arm_addsubdf3.o)
- .debug_line    0x0001b8ca       0x6c /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_aeabi_ldivmod.o)
- .debug_line    0x0001b936       0x4e /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_aeabi_uldivmod.o)
- .debug_line    0x0001b984       0xe0 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_fixdfdi.o)
- .debug_line    0x0001ba64       0xd9 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_fixunsdfdi.o)
- .debug_line    0x0001bb3d      0x1b9 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_udivmoddi4.o)
- .debug_line    0x0001bcf6       0x73 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_divsi3.o)
+ .debug_line    0x000039a8      0x54a main.o
+ .debug_line    0x00003ef2      0x573 title_db.o
+ .debug_line    0x00004465      0x820 tricord_account_bridge.o
+ .debug_line    0x00004c85     0x1d75 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(archive_dev.o)
+ .debug_line    0x000069fa      0x11c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(path_buf.o)
+ .debug_line    0x00006b16     0x1026 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(srv.o)
+ .debug_line    0x00007b3c     0x180a /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(synchronization.o)
+ .debug_line    0x00009346      0x693 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(thread.o)
+ .debug_line    0x000099d9      0xf77 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ac.o)
+ .debug_line    0x0000a950     0x6d10 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(fs.o)
+ .debug_line    0x00011660      0xadd /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ndm.o)
+ .debug_line    0x0001213d      0x998 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ps.o)
+ .debug_line    0x00012ad5      0x6bc /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(srvpm.o)
+ .debug_line    0x00013191     0x1a60 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(sslc.o)
+ .debug_line    0x00014bf1      0x1d6 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_common.o)
+ .debug_line    0x00014dc7      0x4eb /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_connect.o)
+ .debug_line    0x000152b2      0x4a2 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_fcntl.o)
+ .debug_line    0x00015754      0x45f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_gethostbyname.o)
+ .debug_line    0x00015bb3      0x693 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_init.o)
+ .debug_line    0x00016246      0x621 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_poll.o)
+ .debug_line    0x00016867      0x204 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_recv.o)
+ .debug_line    0x00016a6b      0x743 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_recvfrom.o)
+ .debug_line    0x000171ae      0x204 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_send.o)
+ .debug_line    0x000173b2      0x74c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_sendto.o)
+ .debug_line    0x00017afe      0x344 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(soc_socket.o)
+ .debug_line    0x00017e42      0x26a /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(decode_utf8.o)
+ .debug_line    0x000180ac      0x2da /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(utf16_to_utf8.o)
+ .debug_line    0x00018386      0x2ab /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(utf8_to_utf16.o)
+ .debug_line    0x00018631      0x436 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(initArgv.o)
+ .debug_line    0x00018a67      0x99d /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(syscalls.o)
+ .debug_line    0x00019404      0x78f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(svc.o)
+ .debug_line    0x00019b93       0x49 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(readtp.o)
+ .debug_line    0x00019bdc       0x6f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(stack_adjust.o)
+ .debug_line    0x00019c4b      0x43d /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(3dslink.o)
+ .debug_line    0x0001a088      0x282 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(env.o)
+ .debug_line    0x0001a30a      0x49b /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(os.o)
+ .debug_line    0x0001a7a5      0x190 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(decode_utf16.o)
+ .debug_line    0x0001a935      0x18f /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(encode_utf16.o)
+ .debug_line    0x0001aac4      0x221 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(encode_utf8.o)
+ .debug_line    0x0001ace5      0x1c9 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ctru_exit.o)
+ .debug_line    0x0001aeae      0x1d4 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(ctru_init.o)
+ .debug_line    0x0001b082      0x35c /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(allocateHeaps.o)
+ .debug_line    0x0001b3de      0x2f2 /opt/dkp_root/opt/devkitpro/libctru/lib/libctru.a(mappable.o)
+ .debug_line    0x0001b6d0       0x67 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_udivsi3.o)
+ .debug_line    0x0001b737       0x4a /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_dvmd_tls.o)
+ .debug_line    0x0001b781      0x14b /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_arm_addsubdf3.o)
+ .debug_line    0x0001b8cc       0x6c /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_aeabi_ldivmod.o)
+ .debug_line    0x0001b938       0x4e /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_aeabi_uldivmod.o)
+ .debug_line    0x0001b986       0xe0 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_fixdfdi.o)
+ .debug_line    0x0001ba66       0xd9 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_fixunsdfdi.o)
+ .debug_line    0x0001bb3f      0x1b9 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_udivmoddi4.o)
+ .debug_line    0x0001bcf8       0x73 /opt/dkp_root/opt/devkitpro/devkitARM/bin/../lib/gcc/arm-none-eabi/16.1.0/armv6k/fpu/libgcc.a(_divsi3.o)
 
 .debug_frame    0x00000000     0x3bfc
  *(.debug_frame)
