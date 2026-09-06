@@ -1,34 +1,26 @@
 [
   {
-    "content": "Install devkitPro toolchain (arm64 docker layers) - DONE",
+    "content": "Recherche: méthode fiable d'auto-boot Luma3DS - DONE (mainline ne le supporte pas; fork Luma3DS-autorun)",
     "status": "completed"
   },
   {
-    "content": "Fix ps: Title ID placeholder in sysmodule/tricord_presenced.rsf (0x0004013000003102) - DONE",
+    "content": "Audit code: points de crash/panic au démarrage - DONE (seul svcBreak = __system_allocateHeaps)",
     "status": "completed"
   },
   {
-    "content": "Build sysmodule -> 000401300F000102.cxi - DONE",
+    "content": "Robustesse: __system_allocateHeaps fallback tailles + jamais de crash dump; fuites gateway corrigées - DONE (vérifié statiquement)",
     "status": "completed"
   },
   {
-    "content": "Build host tools: makerom, ctrtool, bannertool, 3gxtool - DONE",
+    "content": "Auto-boot: étude documentée; non implémenté par sûreté (aucune écriture /luma/titles) - DONE",
     "status": "completed"
   },
   {
-    "content": "Build plugin -> tricord_overlay.3gx (CTRPluginFramework) - DONE",
+    "content": "Rebuild sysmodule + .cia, servir le nouveau fichier (41b26813...) - DONE",
     "status": "completed"
   },
   {
-    "content": "Build installer -> tricord-presence-installer.cia (validated with ctrtool) - DONE",
-    "status": "completed"
-  },
-  {
-    "content": "Run full ./build.sh, produce dist/tricord-presence-installer.cia (clean rebuild reproduced) - DONE",
-    "status": "completed"
-  },
-  {
-    "content": "Write docs/RAPPORT_IMPLEMENTATION.md - DONE",
+    "content": "RAPPORT mis à jour + testing_agent web deliverable 100% - DONE",
     "status": "completed"
   }
 ]

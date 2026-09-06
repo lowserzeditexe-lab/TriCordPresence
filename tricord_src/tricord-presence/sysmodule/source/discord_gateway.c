@@ -824,14 +824,33 @@ Result discordGatewayInit(void) {
     if (!s_gw.acc) return -2;
 
 #ifdef __3DS__
+    /* Robustesse : chaque chemin d'échec libère ce qui a été alloué pour que
+     * les réessais périodiques (main.c, mode dégradé) ne fuient pas de
+     * mémoire. Le sysmodule reste vivant et retentera plus tard. */
     s_socBuffer = (u32 *)memalign(0x1000, SOC_BUFFERSIZE);
-    if (!s_socBuffer) return -2;
+    if (!s_socBuffer) {
+        GW_LOG("memalign soc échoué -> Gateway différée (mode dégradé)");
+        free(s_gw.acc); s_gw.acc = NULL;
+        return -2;
+    }
     rc = socInit(s_socBuffer, SOC_BUFFERSIZE);
-    if (R_FAILED(rc)) { GW_LOG("socInit rc=%08lX", (unsigned long)rc); return rc; }
+    if (R_FAILED(rc)) {
+        GW_LOG("socInit rc=%08lX -> Gateway différée (mode dégradé)", (unsigned long)rc);
+        free(s_socBuffer); s_socBuffer = NULL;
+        free(s_gw.acc); s_gw.acc = NULL;
+        return rc;
+    }
     s_threadRunning = true;
     /* Pile 64 KiB : handshake mbedtls + jansson. Priorité basse (0x3F). */
     s_thread = threadCreate(gateway_thread_main, NULL, 0x10000, 0x3F, -2, false);
-    if (!s_thread) { s_threadRunning = false; return -3; }
+    if (!s_thread) {
+        GW_LOG("threadCreate gateway échoué -> Gateway différée (mode dégradé)");
+        s_threadRunning = false;
+        socExit();
+        free(s_socBuffer); s_socBuffer = NULL;
+        free(s_gw.acc); s_gw.acc = NULL;
+        return -3;
+    }
 #else
     s_threadRunning = true;
     pthread_create(&s_thread, NULL, gateway_thread_trampoline, NULL);
@@ -857,6 +876,7 @@ void discordGatewayExit(void) {
 #else
     pthread_join(s_thread, NULL);
 #endif
+    free(s_gw.acc); s_gw.acc = NULL; /* évite la fuite sur cycle exit/reinit (changement de compte) */
     accountBridgeExit();
 }
 

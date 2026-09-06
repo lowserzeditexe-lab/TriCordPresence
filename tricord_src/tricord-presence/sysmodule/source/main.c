@@ -32,12 +32,11 @@
 #define PRESENCE_IPC_PORT "presence:d"
 
 // --- Surcharges libctru pour un contexte sysmodule -----------------------
-// Taille du tas principal (newlib/malloc). Le 1er svcControlMemory (tas
-// principal) de 3 MiB avait RÉUSSI sur la console (crash dumps 7 & 8), on
-// garde donc 3 MiB : ils portent le buffer soc:U (1 MiB, via memalign), la
-// base de titres, les buffers TLS mbedtls, jansson et la pile du thread
-// gateway. Le tas linéaire est géré ci-dessous (__system_allocateHeaps).
-u32 __ctru_heap_size        = 0x300000; // 3 MiB (tas principal / malloc)
+// Taille du tas principal souhaitée (newlib/malloc). Le tas principal porte
+// le buffer soc:U (1 MiB, via memalign), la base de titres, les buffers TLS
+// mbedtls, jansson et la pile du thread gateway. Le tas linéaire n'est pas
+// utilisé (voir __system_allocateHeaps).
+u32 __ctru_heap_size        = 0x300000; // 3 MiB souhaités (dégradé si indispo)
 u32 __ctru_linear_heap_size = 0;        // inutilisé : voir __system_allocateHeaps
 
 // Globals libctru manipulés par notre __system_allocateHeaps custom.
@@ -46,35 +45,52 @@ extern char *fake_heap_end;
 extern u32 __ctru_heap;
 extern u32 __ctru_linear_heap;
 
+// Dernier recours anti-crash-dump : petit tas statique en .bss. Si TOUTES les
+// allocations svcControlMemory échouent (cas limite console : mémoire
+// épuisée), on démarre quand même sur ce tas minimal au lieu de faire
+// svcBreak (qui génèrerait un crash dump). Le sysmodule tourne alors en mode
+// ultra-dégradé (logs + monitoring APT) ; la Gateway (buffer soc 1 MiB) ne
+// démarrera pas mais ne plantera pas non plus.
+static u8 s_fallbackHeap[0x20000] __attribute__((aligned(0x1000))); // 128 KiB
+
 // CRASH HARDWARE CONFIRMÉ (crash_dump_00000007 PUIS 00000008, 3DS réelle) :
 //   initSystem -> __libctru_init -> __system_allocateHeaps -> svcBreak(PANIC),
-//   AVANT main() (sp=0x0FFFFFC0). Analyse du désassemblage + des 2 dumps :
-//   le 1er svcControlMemory (tas principal, MEMOP_ALLOC) RÉUSSIT, mais le 2e
-//   (tas linéaire, op=0x00010003 = MEMOP_ALLOC_LINEAR) ÉCHOUE puis svcBreak
-//   (LR des dumps = __system_allocateHeaps+0x1a8, la branche d'échec du 2e
-//   svcControlMemory). La vérification « total <= mémoire dispo » passait
-//   AVANT (donc ce n'est PAS un problème de budget/taille : mettre le tas
-//   linéaire à 256 KiB au lieu de 0 n'a rien changé, cf. dump #8) : c'est
-//   l'allocation de mémoire LINÉAIRE elle-même qui est refusée à ce process
-//   System/sysapplet par le noyau.
+//   AVANT main(). Le 2e svcControlMemory (tas LINÉAIRE, op=0x00010003 =
+//   MEMOP_ALLOC_LINEAR) échouait — la mémoire linéaire est refusée à ce
+//   process System/sysapplet par le noyau (cf. RAPPORT §0).
 //
-// CORRECTIF : on surcharge le symbole faible __system_allocateHeaps de libctru
-// (system/allocateHeaps.c) pour n'allouer QUE le tas principal (MEMOP_ALLOC)
-// et NE JAMAIS appeler MEMOP_ALLOC_LINEAR. Ce sysmodule n'utilise pas
-// linearAlloc/GPU (le buffer soc:U passe par memalign sur le tas principal),
-// donc l'absence de tas linéaire est sans conséquence. mappableInit() est
-// conservé (région VA 0x10000000-0x14000000) comme dans le code d'origine.
-// Source : libctru system/allocateHeaps.c (symbole WEAK, surchargeable) +
-// 3ds/allocator/mappable.h ; reproduit d'après le désassemblage de la version
-// installée (devkitARM 16 / libctru des portlibs).
+// CORRECTIF + ROBUSTESSE : on surcharge le symbole faible __system_allocateHeaps
+// de libctru pour (1) n'allouer QUE le tas principal (MEMOP_ALLOC, jamais
+// MEMOP_ALLOC_LINEAR), et (2) NE JAMAIS faire svcBreak : on tente une échelle
+// de tailles décroissantes puis, en tout dernier recours, un tas statique.
+// Ainsi le sysmodule "survit" à un manque de mémoire au lieu de crasher.
+// Ce sysmodule n'utilise pas linearAlloc/GPU (le buffer soc:U passe par
+// memalign sur le tas principal), donc l'absence de tas linéaire est sans
+// conséquence. mappableInit() est conservé (région VA 0x10000000-0x14000000).
+// Source : libctru system/allocateHeaps.c (symbole WEAK) + 3ds/allocator/
+// mappable.h ; reproduit d'après le désassemblage (devkitARM 16 / portlibs).
 void __system_allocateHeaps(void) {
-    Result rc = svcControlMemory(&__ctru_heap, OS_HEAP_AREA_BEGIN, 0x0,
-                                 __ctru_heap_size, MEMOP_ALLOC, MEMPERM_READWRITE);
-    if (R_FAILED(rc)) svcBreak(USERBREAK_PANIC);
+    // Tailles décroissantes : on prend la plus grande qui s'alloue.
+    static const u32 sizes[] = { 0x300000, 0x200000, 0x100000, 0x80000, 0x40000 };
+    Result rc = -1;
+    u32 chosen = 0;
+    for (unsigned i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
+        rc = svcControlMemory(&__ctru_heap, OS_HEAP_AREA_BEGIN, 0x0,
+                              sizes[i], MEMOP_ALLOC, MEMPERM_READWRITE);
+        if (R_SUCCEEDED(rc)) { chosen = sizes[i]; break; }
+    }
 
-    // Tas newlib (malloc/memalign) = tas principal ci-dessus.
-    fake_heap_start = (char *)__ctru_heap;
-    fake_heap_end   = fake_heap_start + __ctru_heap_size;
+    if (R_SUCCEEDED(rc)) {
+        __ctru_heap_size = chosen;
+        fake_heap_start  = (char *)__ctru_heap;
+        fake_heap_end    = fake_heap_start + chosen;
+    } else {
+        // Aucune allocation possible -> tas statique minimal, PAS de svcBreak.
+        __ctru_heap      = (u32)s_fallbackHeap;
+        __ctru_heap_size = (u32)sizeof(s_fallbackHeap);
+        fake_heap_start  = (char *)s_fallbackHeap;
+        fake_heap_end    = (char *)s_fallbackHeap + sizeof(s_fallbackHeap);
+    }
 
     // Pas de tas linéaire (MEMOP_ALLOC_LINEAR refusé pour ce process) :
     // linearAlloc() renverra NULL, ce qui est acceptable ici car non utilisé.

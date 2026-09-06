@@ -64,7 +64,78 @@ démarrage du sysmodule sur console.
 
 
 
-## 1. Environnement — comment devkitPro a été obtenu
+## 0bis. Robustesse du démarrage (jamais de crash dump)
+
+En complément des correctifs de tas ci-dessus, le démarrage a été durci pour
+« survivre » aux cas limites console au lieu de planter :
+
+1. **`__system_allocateHeaps` ne fait plus JAMAIS `svcBreak`.** Il tente une
+   échelle de tailles décroissantes pour le tas principal
+   (`3 MiB → 2 → 1 → 0.5 → 0.25 MiB`) et prend la première qui s'alloue. Si
+   **toutes** échouent (mémoire épuisée), il bascule sur un **petit tas
+   statique de 128 KiB** (`.bss`) : le sysmodule démarre quand même (logs +
+   monitoring APT) en mode ultra-dégradé, **sans générer de crash dump**.
+2. **Échec d'init réseau = mode dégradé, pas de crash.** `discordGatewayInit`
+   pouvait laisser fuir de la mémoire sur ses chemins d'échec (`memalign` soc,
+   `socInit`, `threadCreate`) ; chaque chemin libère désormais ce qui a été
+   alloué et renvoie une erreur. `main.c` garde le sysmodule vivant (monitoring
+   APT + IPC) et **retente `discordGatewayInit` toutes les ~15 s** — utile si
+   le Wi-Fi/`soc:U` n'est pas prêt au boot ou si l'utilisateur se connecte à
+   TriCord plus tard. `discordGatewayExit` libère aussi le buffer `acc` pour ne
+   pas fuir sur le cycle exit/reinit (changement de compte).
+
+Vérifié statiquement : `__system_allocateHeaps` ne contient plus aucun
+`svcBreak` ni littéral `MEMOP_ALLOC_LINEAR`.
+
+---
+
+## 0ter. Étude : lancement automatique du sysmodule au boot (`/luma/titles`)
+
+**Question** : peut-on éviter de relancer l'installeur après chaque
+redémarrage, en faisant démarrer le sysmodule automatiquement au boot via
+`/luma/titles` ?
+
+**Conclusion : pas de méthode fiable et sûre réalisable depuis l'installeur
+sur un Luma3DS *mainline*.** Détail et sources :
+
+1. **Luma3DS mainline ne lance PAS spontanément un sysmodule custom au boot.**
+   `/luma/sysmodules/<TitleID>.cxi` ne fait que *remplacer/charger* un module
+   **quand ce Title ID est lancé par PM** ; le loader n'ajoute pas de nouveau
+   process de lui-même. L'existence d'un fork dédié, **`Luma3DS-autorun`**
+   (git.anod.cc/anod/Luma3DS-autorun), qui *patche* Luma pour ajouter cette
+   fonctionnalité, confirme qu'elle est absente du firmware officiel.
+   Source : wiki gamebrew « Luma3DS » ; commits `Luma3DS-autorun`.
+2. **La piste `/luma/titles/<TID>/exheader.bin` est dépréciée pour les
+   sysmodules** dans les Luma récents (le chargement de sysmodules passe
+   désormais exclusivement par `/luma/sysmodules/`). Source : gamebrew
+   « Luma3DS » ; `sysmodules/loader/source/patcher.c` (LumaTeam).
+3. **L'« injection de dépendance »** (ajouter notre Title ID à la liste
+   `Dependency` d'un module système lancé au boot, en déposant un
+   `exheader.bin` modifié pour CE module dans `/luma/titles/`) est la seule
+   approche « sans patch de Luma ». Elle est **écartée** ici car :
+   - elle exige un `exheader.bin` **valide du module cible** (ex. NS
+     `0004013000008002`), qu'on ne peut pas fabriquer sans le **dumper depuis
+     la console** de l'utilisateur ;
+   - un `exheader.bin` malformé pour un module de boot peut **empêcher ce
+     module de démarrer → risque de console qui ne boote plus** ;
+   - impossible à tester ici (pas de hardware).
+   C'est d'ailleurs la méthode que les auteurs d'origine avaient tentée puis
+   abandonnée (fichiers résiduels `EXH_NS_FILE`/`EXH_SELF_FILE` nettoyés par la
+   désinstallation de l'installeur). La contrainte « ne pas casser le boot »
+   prime : **l'installeur n'écrit donc rien dans `/luma/titles/`.**
+
+**Recommandations pour l'utilisateur** (par ordre de simplicité/risque) :
+- **Rester sur la relance manuelle** (comportement actuel, 100 % sûr) : relancer
+  l'installeur (option « Lancer sans reboot ») après un redémarrage.
+- **Installer le fork `Luma3DS-autorun`** s'il veut un vrai auto-boot : ce fork
+  ajoute officiellement le lancement de sysmodules custom au démarrage. C'est un
+  choix qui touche le CFW de la console (hors périmètre de cet installeur).
+
+Statut : `TODO(hw)` — aucune implémentation d'auto-boot livrée (choix délibéré
+de sûreté). À réévaluer si l'on décide de cibler explicitement `Luma3DS-autorun`.
+
+---
+
 
 ### Blocage rencontré (documenté comme demandé)
 

@@ -1,0 +1,43 @@
+{
+  "summary": "Completed regression testing after sysmodule rebuild. All backend API endpoints and frontend UI verified to serve the rebuilt .cia file with correct SHA-256 hash (41b26813b685a0e1c328e864d638076ee40c635fe8e6f44b2dd5c2a799754f4a). Backend tests: 4/4 passed. Frontend tests: 9/9 passed.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Backend: GET /api/installer/info returns JSON with size 1688512 and sha256 41b26813b685a0e1c328e864d638076ee40c635fe8e6f44b2dd5c2a799754f4a",
+    "Backend: GET /api/download/tricord-presence-installer.cia returns 200, Content-Type application/octet-stream, Content-Length 1688512, downloaded bytes hash to sha256 41b26813...",
+    "Backend: HEAD /api/download/tricord-presence-installer.cia returns 200 with Content-Length 1688512",
+    "Backend: GET /api/download/unknown.cia returns 404",
+    "Frontend: Page loads successfully with TriCord Presence branding",
+    "Frontend: Version pill displays v2 correctly",
+    "Frontend: QR canvas renders in [data-testid=qr-frame]",
+    "Frontend: Download URL displayed correctly in [data-testid=download-url]: https://presence-installer.preview.emergentagent.com/api/download/tricord-presence-installer.cia",
+    "Frontend: SHA-256 displayed correctly in [data-testid=info-sha256]: 41b26813b685a0e1c328e864d638076ee40c635fe8e6f44b2dd5c2a799754f4a",
+    "Frontend: File info displays correctly (filename: tricord-presence-installer.cia, size: 1.61 Mo)",
+    "Frontend: Manual download button is visible and functional",
+    "Frontend: Copy buttons present for URL and SHA-256",
+    "Frontend: No error messages displayed"
+  ],
+  "test_report_links": [
+    "/app/backend/backend_test.py",
+    "/app/.screenshots/frontend-test.png",
+    "/app/.screenshots/file-info-section.png"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend/backend_test.py"
+  ],
+  "success_percentage": {
+    "backend": "100% (4/4 tests passed)",
+    "frontend": "100% (9/9 tests passed)",
+    "overall": "100% (13/13 tests passed)"
+  },
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": false
+}
