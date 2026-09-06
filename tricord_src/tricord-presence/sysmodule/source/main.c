@@ -17,6 +17,7 @@
  */
 
 #include <3ds.h>
+#include <3ds/allocator/mappable.h>
 #include <string.h>
 #include "apt_monitor.h"
 #include "ipc_server.h"
@@ -31,31 +32,59 @@
 #define PRESENCE_IPC_PORT "presence:d"
 
 // --- Surcharges libctru pour un contexte sysmodule -----------------------
-// libctru (system/allocateHeaps.c) autorise à fixer la taille des heaps ;
-// par défaut il prendrait toute la mémoire "application" disponible, ce qui
-// est faux pour un process de type System.
+// Taille du tas principal (newlib/malloc). Le 1er svcControlMemory (tas
+// principal) de 3 MiB avait RÉUSSI sur la console (crash dumps 7 & 8), on
+// garde donc 3 MiB : ils portent le buffer soc:U (1 MiB, via memalign), la
+// base de titres, les buffers TLS mbedtls, jansson et la pile du thread
+// gateway. Le tas linéaire est géré ci-dessous (__system_allocateHeaps).
+u32 __ctru_heap_size        = 0x300000; // 3 MiB (tas principal / malloc)
+u32 __ctru_linear_heap_size = 0;        // inutilisé : voir __system_allocateHeaps
+
+// Globals libctru manipulés par notre __system_allocateHeaps custom.
+extern char *fake_heap_start;
+extern char *fake_heap_end;
+extern u32 __ctru_heap;
+extern u32 __ctru_linear_heap;
+
+// CRASH HARDWARE CONFIRMÉ (crash_dump_00000007 PUIS 00000008, 3DS réelle) :
+//   initSystem -> __libctru_init -> __system_allocateHeaps -> svcBreak(PANIC),
+//   AVANT main() (sp=0x0FFFFFC0). Analyse du désassemblage + des 2 dumps :
+//   le 1er svcControlMemory (tas principal, MEMOP_ALLOC) RÉUSSIT, mais le 2e
+//   (tas linéaire, op=0x00010003 = MEMOP_ALLOC_LINEAR) ÉCHOUE puis svcBreak
+//   (LR des dumps = __system_allocateHeaps+0x1a8, la branche d'échec du 2e
+//   svcControlMemory). La vérification « total <= mémoire dispo » passait
+//   AVANT (donc ce n'est PAS un problème de budget/taille : mettre le tas
+//   linéaire à 256 KiB au lieu de 0 n'a rien changé, cf. dump #8) : c'est
+//   l'allocation de mémoire LINÉAIRE elle-même qui est refusée à ce process
+//   System/sysapplet par le noyau.
 //
-// CRASH HARDWARE CONFIRMÉ (crash_dump_00000007, 3DS réelle) — NE PAS remettre
-// __ctru_linear_heap_size à 0 :
-//   Chaîne du crash : initSystem -> __libctru_init -> __system_allocateHeaps
-//   -> svcBreak(PANIC), AVANT même main() (sp à 0x0FFFFFC0, ~64 o utilisés).
-//   Cause : __system_allocateHeaps interprète __ctru_linear_heap_size == 0
-//   comme « auto = alloue TOUT le reste de la mémoire committable du process
-//   au tas linéaire » (désassemblage : `cmp r1,#0` puis `subeq r2,r2,r3`).
-//   Pour un process System/sysapplet, ce « reste » auto dépasse ce que
-//   svcControlMemory peut réellement committer -> le 2e svcControlMemory
-//   (tas linéaire) échoue -> svcBreak (LR du dump = __system_allocateHeaps
-//   +0x1a8, juste après ce svcControlMemory).
-//
-// Correctif : tailles explicites. Le 1er svcControlMemory (tas principal,
-// 3 MiB) avait RÉUSSI sur la console -> on sait que ~3 MiB sont committables.
-// On garde donc un total de 3 MiB (2.75 MiB principal + 0.25 MiB linéaire)
-// pour ne jamais redemander plus que ce montant empiriquement validé.
-// Le tas principal (memalign) porte le buffer soc:U (1 MiB), la base de
-// titres, les buffers TLS mbedtls et jansson ; rien n'utilise linearAlloc,
-// d'où un tas linéaire volontairement petit mais NON nul.
-u32 __ctru_heap_size        = 0x2C0000; // 2.75 MiB
-u32 __ctru_linear_heap_size = 0x40000;  // 256 KiB (explicite, jamais 0)
+// CORRECTIF : on surcharge le symbole faible __system_allocateHeaps de libctru
+// (system/allocateHeaps.c) pour n'allouer QUE le tas principal (MEMOP_ALLOC)
+// et NE JAMAIS appeler MEMOP_ALLOC_LINEAR. Ce sysmodule n'utilise pas
+// linearAlloc/GPU (le buffer soc:U passe par memalign sur le tas principal),
+// donc l'absence de tas linéaire est sans conséquence. mappableInit() est
+// conservé (région VA 0x10000000-0x14000000) comme dans le code d'origine.
+// Source : libctru system/allocateHeaps.c (symbole WEAK, surchargeable) +
+// 3ds/allocator/mappable.h ; reproduit d'après le désassemblage de la version
+// installée (devkitARM 16 / libctru des portlibs).
+void __system_allocateHeaps(void) {
+    Result rc = svcControlMemory(&__ctru_heap, OS_HEAP_AREA_BEGIN, 0x0,
+                                 __ctru_heap_size, MEMOP_ALLOC, MEMPERM_READWRITE);
+    if (R_FAILED(rc)) svcBreak(USERBREAK_PANIC);
+
+    // Tas newlib (malloc/memalign) = tas principal ci-dessus.
+    fake_heap_start = (char *)__ctru_heap;
+    fake_heap_end   = fake_heap_start + __ctru_heap_size;
+
+    // Pas de tas linéaire (MEMOP_ALLOC_LINEAR refusé pour ce process) :
+    // linearAlloc() renverra NULL, ce qui est acceptable ici car non utilisé.
+    __ctru_linear_heap = 0;
+    __ctru_linear_heap_size = 0;
+
+    // Allocateur d'adresses mappables (mapping de blocs mémoire partagés) :
+    // mêmes bornes que le libctru d'origine.
+    mappableInit(0x10000000, 0x14000000);
+}
 
 // libctru appelle par défaut aptInit()/hidInit() dans __appInit : un
 // sysmodule n'est pas une applet APT, on n'initialise que srv + fs + le

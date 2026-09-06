@@ -9,47 +9,59 @@ issue de l'image officielle `devkitpro/devkitarm` (variante arm64).
 
 ---
 
-## 0. Correctif post-crash hardware (crash_dump_00000007) — tas linéaire
+## 0. Correctif post-crash hardware — tas linéaire (dumps #7 et #8)
 
 **Symptôme (console réelle)** : après installation du `.cia` et lancement de
 l'installeur, en répondant « oui » à « Lancer le sysmodule maintenant (sans
-reboot) ? », la 3DS génère un crash dump Luma3DS.
+reboot) ? », la 3DS génère un crash dump Luma3DS. **Deux dumps** ont été
+fournis successivement (`crash_dump_00000007` puis `00000008`).
 
-**Analyse du dump** (format Luma3DS v3.1, ARM11 core 1) :
+**Analyse des dumps** (format Luma3DS v3.1, ARM11 core 1) :
 - Process fautif = `tricord_presenced`, Title ID `000401300F000102` (le
-  sysmodule lui-même) → **le lancement à chaud a fonctionné**, c'est le
-  sysmodule qui panique **au démarrage**.
-- `sp = 0x0FFFFFC0` (~64 octets utilisés) → crash **avant `main()`**, pendant
-  l'init libctru.
-- Chaîne reconstruite depuis PC/LR/stack (symboles de `tricord_presenced.elf`) :
+  sysmodule) → **le lancement à chaud fonctionne**, c'est le sysmodule qui
+  panique **au démarrage** (`sp=0x0FFFFFC0`, ~64 o utilisés → avant `main()`).
+- Chaîne reconstruite via les symboles de `tricord_presenced.elf` :
   `initSystem → __libctru_init → __system_allocateHeaps → svcBreak(PANIC)`.
-  LR = `0x149e00` = instruction juste après le **2ᵉ** `bl svcBreak` de
-  `__system_allocateHeaps`, c.-à-d. la branche d'échec du **2ᵉ
-  `svcControlMemory`** = allocation du **tas linéaire**.
+  LR = `0x149e00` = juste après le **2ᵉ `svcControlMemory`** de
+  `__system_allocateHeaps`.
+- Le désassemblage identifie précisément ce 2ᵉ appel : op = `0x00010003` =
+  **`MEMOP_ALLOC_LINEAR`** (allocation de mémoire **linéaire**). Le 1ᵉʳ appel
+  (tas principal, `MEMOP_ALLOC`) réussit ; c'est l'allocation **linéaire** qui
+  échoue → `svcBreak`.
 
-**Cause racine** : `sysmodule/source/main.c` fixait `__ctru_linear_heap_size = 0`.
-Le désassemblage de `__system_allocateHeaps` montre que libctru interprète
-`0` non pas comme « pas de tas linéaire » mais comme **« auto = alloue TOUTE la
-mémoire restante committable du process »** (`cmp r1,#0` puis `subeq r2,r2,r3`).
-Pour un process `System`/`sysapplet`, ce montant auto dépasse ce que
-`svcControlMemory` peut réellement committer → échec → `svcBreak`.
+**Deux hypothèses testées :**
+1. *(dump #7)* `__ctru_linear_heap_size = 0` → libctru l'interprète comme
+   « auto = alloue tout le reste » ⇒ on a d'abord fixé une taille explicite
+   (2.75 Mio + 0.25 Mio). **Le dump #8 a montré que ça ne suffisait pas** : le
+   crash persistait exactement au même endroit (allocation linéaire), et la
+   vérification interne « total ≤ mémoire dispo » passait **avant** l'appel —
+   donc ce **n'est pas** un problème de budget/taille.
+2. *(conclusion, dump #8)* Le noyau **refuse toute allocation de mémoire
+   linéaire** (`MEMOP_ALLOC_LINEAR`) à ce process `System`/`sysapplet`, quelle
+   que soit la taille demandée.
 
-**Correctif** (`main.c`) : tailles de heap explicites, jamais 0.
-Le 1ᵉʳ `svcControlMemory` (tas principal, 3 MiB) ayant **réussi** sur la
-console, on sait que ~3 MiB sont committables ; on conserve donc un total de
-3 MiB, réparti explicitement :
-```c
-u32 __ctru_heap_size        = 0x2C0000; // 2.75 MiB (memalign : soc 1 MiB, titles, TLS…)
-u32 __ctru_linear_heap_size = 0x40000;  // 256 KiB explicite (rien n'utilise linearAlloc)
-```
-Vérifié statiquement dans le nouvel ELF (`.data`) : `__ctru_linear_heap_size =
-0x40000` (non nul → la branche « auto » fautive n'est plus prise).
+**Correctif final** (`sysmodule/source/main.c`) : on **surcharge le symbole
+faible `__system_allocateHeaps`** de libctru pour n'allouer **que le tas
+principal** (`MEMOP_ALLOC`, 3 Mio) et **ne jamais appeler
+`MEMOP_ALLOC_LINEAR`**. Ce sysmodule n'utilise pas `linearAlloc`/GPU (le
+buffer `soc:U` passe par `memalign` sur le tas principal), donc l'absence de
+tas linéaire est sans effet. `mappableInit(0x10000000, 0x14000000)` est
+conservé (identique au code libctru d'origine).
 
-**Statut** : le correctif supprime la cause exacte du crash observé, mais reste
-`TODO(hw)` tant que l'utilisateur n'a pas reconfirmé le démarrage du sysmodule
-sur console (impossible à exécuter dans l'environnement de build).
+Vérifié statiquement dans le nouvel ELF : `__system_allocateHeaps` ne contient
+plus qu'**un seul** `svcControlMemory` (`MEMOP_ALLOC` @ `0x08000000`) et **plus
+aucun littéral `0x00010003`** → l'appel fautif a disparu.
+
+Source : libctru `system/allocateHeaps.c` (symbole `WEAK`, surchargeable) +
+`<3ds/allocator/mappable.h>` ; override reproduit d'après le désassemblage de
+la version installée (devkitARM 16 / portlibs).
+
+**Statut** : le correctif supprime l'appel exact qui plantait dans les deux
+dumps, mais reste `TODO(hw)` tant que l'utilisateur n'a pas reconfirmé le
+démarrage du sysmodule sur console.
 
 ---
+
 
 
 ## 1. Environnement — comment devkitPro a été obtenu

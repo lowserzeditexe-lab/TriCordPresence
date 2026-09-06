@@ -7,7 +7,7 @@ class CIAInstallerAPITester:
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
-        self.expected_sha256 = "456796fbd7df27800aed01e6ae10396e8a7cf8cd6e223bdb03ec3ae0b69da979"
+        self.expected_sha256 = "0284be8bcb1f8bb58a3773dc00cacd1f0fe98efc9064f39d955c109f9b045aff"
         self.expected_size = 1688512
         self.expected_filename = "tricord-presence-installer.cia"
 
