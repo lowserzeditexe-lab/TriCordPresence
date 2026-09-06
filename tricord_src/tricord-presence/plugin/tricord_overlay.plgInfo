@@ -1,0 +1,23 @@
+Author: TriCord
+
+Version:
+    Major: 0
+    Minor: 1
+    Revision: 0
+
+Targets: # 0 / vide = tous les jeux (slot /luma/plugins/default.3gx)
+
+Title: TriCord Presence overlay
+
+Summary: Affiche "Vous jouez à <jeu>" (Rich Presence Discord)
+
+Description: |
+  Overlay du projet TriCord Presence : interroge le sysmodule
+  tricord_presenced via IPC et affiche un toast quand la presence Discord
+  est mise a jour.
+
+Compatibility: Any
+
+MemorySize: 3MiB
+
+UsePrivateMemory: false

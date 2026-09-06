@@ -1,0 +1,34 @@
+[
+  {
+    "content": "Install devkitPro toolchain (arm64 docker layers) - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Fix ps: Title ID placeholder in sysmodule/tricord_presenced.rsf (0x0004013000003102) - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Build sysmodule -> 000401300F000102.cxi - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Build host tools: makerom, ctrtool, bannertool, 3gxtool - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Build plugin -> tricord_overlay.3gx (CTRPluginFramework) - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Build installer -> tricord-presence-installer.cia (validated with ctrtool) - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Run full ./build.sh, produce dist/tricord-presence-installer.cia (clean rebuild reproduced) - DONE",
+    "status": "completed"
+  },
+  {
+    "content": "Write docs/RAPPORT_IMPLEMENTATION.md - DONE",
+    "status": "completed"
+  }
+]
