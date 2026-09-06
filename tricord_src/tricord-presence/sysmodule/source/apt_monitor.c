@@ -32,6 +32,16 @@ static int s_numExcludes = 0;
 
 static void loadExcludes(void) {
     s_numExcludes = 0;
+    // Exclusions INTÉGRÉES (toujours actives) : ne jamais publier comme "jeu"
+    //  - l'installeur lui-même (000400000F000200) : c'est lui qui lance le
+    //    sysmodule, il peut donc rester un instant le titre remonté par
+    //    APT:GetAppletInfo(0x300) juste après le lancement à chaud.
+    //  - le sysmodule lui-même (000401300F000102), par sécurité.
+    // Sans ça, la présence affichait "Title 000400000F000200" (cf. retour
+    // console : capture montrant l'installeur au lieu du jeu réel).
+    s_excludes[s_numExcludes++] = 0x000400000F000200ULL; // installeur (CIA)
+    s_excludes[s_numExcludes++] = 0x000401300F000102ULL; // sysmodule
+
     FILE *f = fopen(CONFIG_PATH, "r");
     if (!f) return;
     char line[256];
