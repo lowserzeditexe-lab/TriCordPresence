@@ -9,7 +9,6 @@ gettext=0.21-12
 git-restore-mtime=2022.12-1
 gnupg=2.2.40-1.1
 libarchive-tools=3.6.2-1+deb12u2
-libyaml-cpp-dev=0.7.0+dfsg-8+b1
 locales=2.36-9+deb12u10
 make=4.3-4.1
 ninja-build=1.11.1-2~deb12u1

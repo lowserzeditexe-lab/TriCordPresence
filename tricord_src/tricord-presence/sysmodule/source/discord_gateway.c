@@ -777,25 +777,22 @@ static json_t *build_activity_in_game(const presence_state_t *st) {
         json_object_set_new(ts, "start", json_integer((json_int_t)st->started_at_ms));
         json_object_set_new(act, "timestamps", ts);
     }
-    /* Assets : le sysmodule POST l'icône SMDH au backend via /api/icons/<TID>
-     * juste avant l'envoi de la présence (tryUploadIcon dans la boucle
-     * réseau). On ne renseigne assets.large_image QUE si l'upload a réussi
-     * pour ce titre : sinon Discord fetch une 404 et affiche un placeholder
-     * cassé. Le format mp:external/https/<host>/<path> est celui du Media
-     * Proxy Discord (fetch + re-serve depuis le CDN). */
-    if (st->has_icon && s_backendUrl[0] && s_iconTIDUploaded == st->title_id) {
-        char large[512];
-        const char *host = s_backendUrl;
-        const char *scheme = "https";
-        if (strncmp(host, "https://", 8) == 0) host += 8;
-        else if (strncmp(host, "http://", 7) == 0) { host += 7; scheme = "http"; }
-        snprintf(large, sizeof(large), "mp:external/%s/%s/api/icons/%016llX.png",
-                 scheme, host, (unsigned long long)st->title_id);
-        json_t *assets = json_object();
-        json_object_set_new(assets, "large_image", json_string(large));
-        json_object_set_new(assets, "large_text", json_string(st->game_name));
-        json_object_set_new(act, "assets", assets);
-    }
+    /* Assets Discord : pour les comptes utilisateur (self-bot), Discord
+     * n'accepte PAS d'URL arbitraire dans assets.large_image ("mp:external/..."
+     * est réservé au client officiel Discord et refusé côté gateway user).
+     * Deux voies possibles :
+     *   1. Discord ignore assets.large_image invalide -> icône par défaut
+     *      de l'app (uploadée manuellement dans le dev portal Discord) est
+     *      affichée. C'est le comportement voulu ici (défaut Zen). Le user
+     *      doit uploader une icône par défaut à son app (ID s_appId) dans
+     *      https://discord.com/developers/applications/<APP_ID>/general
+     *      -> App Icon.
+     *   2. Pour une icône par jeu, il faudrait uploader chaque icône SMDH
+     *      comme asset nommé (Rich Presence -> Art Assets), et référencer
+     *      le nom. Limite Discord : 300 assets par app.
+     * On garde le POST /api/icons/<TID> côté sysmodule (backend cache OK,
+     * réutilisable par ex. pour un frontend web "titres connus"), mais on
+     * n'envoie plus la référence dans la payload Rich Presence. */
     return act;
 }
 

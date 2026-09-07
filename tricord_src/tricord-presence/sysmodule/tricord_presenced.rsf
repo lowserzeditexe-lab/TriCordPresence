@@ -139,6 +139,9 @@ AccessControlInfo:
     - ndm:u
     - ac:u
     - ps:ps
+    - ptm:gets  # PTMGETS_GetSystemTime pour timer Discord (heure système 3DS,
+    - ptm:sysm  #   avec fallback RTC via ptm:sysm si l'utilisateur a un
+                #   ptm:gets restreint).
   FileSystemAccess:
     - DirectSdmc
     - CategorySystemApplication

@@ -74,10 +74,14 @@ $(OUTPUT).3dsx: $(OUTPUT).elf $(OUTPUT).smdh
 $(OUTPUT).elf: $(OFILES)
 
 $(DEPSDIR)/banner.bnr: $(TOPDIR)/$(ASSETS)/banner.png $(TOPDIR)/$(ASSETS)/silence.wav
-	@bannertool makebanner -i $(TOPDIR)/$(ASSETS)/banner.png -a $(TOPDIR)/$(ASSETS)/silence.wav -o $@ >/dev/null
+	@# Overridable banner PNG via TRICORD_BANNER_PNG env (contourne un watcher
+	@# de fichiers qui réécrase assets/banner.png entre build et bannertool).
+	@BPNG="$${TRICORD_BANNER_PNG:-$(TOPDIR)/$(ASSETS)/banner.png}"; \
+	 bannertool makebanner -i "$$BPNG" -a $(TOPDIR)/$(ASSETS)/silence.wav -o $@ >/dev/null
 
 $(DEPSDIR)/icon.icn: $(TOPDIR)/$(ASSETS)/icon.png
-	@bannertool makesmdh -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" -i $< -o $@ >/dev/null
+	@IPNG="$${TRICORD_ICON_PNG:-$(TOPDIR)/$(ASSETS)/icon.png}"; \
+	 bannertool makesmdh -s "$(APP_TITLE)" -l "$(APP_DESCRIPTION)" -p "$(APP_AUTHOR)" -i "$$IPNG" -o $@ >/dev/null
 
 $(OUTPUT).cia: $(OUTPUT).elf $(DEPSDIR)/banner.bnr $(DEPSDIR)/icon.icn $(RSF)
 	@echo makerom $(notdir $@)

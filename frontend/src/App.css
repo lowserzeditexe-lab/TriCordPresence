@@ -87,6 +87,21 @@ body {
   background: linear-gradient(135deg, var(--blurple), #4149d6);
   box-shadow: 0 8px 26px rgba(88, 101, 242, 0.45);
 }
+/* Variante affichant le PNG /public/tricord-icon.png (identité TriCord)
+ * plutôt que l'icône Lucide. Padding réduit pour laisser respirer le logo,
+ * fond assorti au triangle du logo. */
+.brand-badge-logo {
+  padding: 3px;
+  background: linear-gradient(135deg, #5f4fd6 0%, #4034a0 100%);
+  box-shadow: 0 10px 30px rgba(95, 79, 214, 0.55);
+}
+.brand-badge-logo img {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  object-fit: contain;
+  display: block;
+}
 .brand-title {
   margin: 0;
   font-size: 22px;

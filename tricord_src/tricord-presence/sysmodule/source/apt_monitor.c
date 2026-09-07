@@ -3,8 +3,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "title_db.h"
 #include "smdh_reader.h"
+#include "log.h"
 
 /*
  * Accès brut au service APT (hébergé par NS) depuis un sysmodule.
@@ -196,7 +198,14 @@ Result aptMonitorGetCurrentState(presence_state_t *out) {
             memcpy(out->icon_rgb565, smdh.large_icon, sizeof(out->icon_rgb565));
             out->has_icon = true;
         }
+        logPrintf("SMDH OK tid=%016llX name=\"%s\" icon=%d", (unsigned long long)titleId, out->game_name, smdh.has_icon ? 1 : 0);
     } else {
+        /* Log de diagnostic : la 3DS refuse fréquemment l'accès NCCH aux
+         * homebrew installés (permissions FS insuffisantes pour l'archive
+         * SavedataAndContent des titres tiers), OU le SMDH est simplement
+         * absent (démos dev, CIA custom sans banner). Le fallback
+         * titles.txt prend le relais quand la base connaît le titre. */
+        logPrintf("SMDH FAIL tid=%016llX rc=%08lX (fallback titles.txt)", (unsigned long long)titleId, (unsigned long)smdhRc);
         titleDbLookup(titleId, out->game_name, sizeof(out->game_name));
     }
     /* Timestamp start : millisecondes Unix. La 3DS n'ayant pas d'horloge
@@ -210,18 +219,61 @@ Result aptMonitorGetCurrentState(presence_state_t *out) {
     return 0;
 }
 
-/* Renvoie un timestamp "monotone" en millisecondes fondé sur svcGetSystemTick
- * (compteur ARM11 en TCU/SYSCLOCK_ARM11 tick, redémarré à chaque boot 3DS).
- * On ajoute un offset "epoch synthétique" (Unix ms) constant pour que
- * Discord affiche un timer positif — la valeur absolue n'a pas d'importance,
- * seule la différence "maintenant - started_at" compte pour le chrono. */
-u64 aptMonitorBootRealtimeMs(void) {
-    /* Constante = 2024-01-01T00:00:00Z en ms Unix : tout timestamp start
-     * postérieur est cohérent pour Discord. */
-    static const u64 SYNTHETIC_EPOCH_MS = 1704067200000ULL;
+/* Renvoie un timestamp Unix en ms basé sur l'horloge de la 3DS.
+ *
+ * Ordre d'essai :
+ *  1. PTMGETS_GetSystemTime : renvoie ms depuis Y2K (2000-01-01). Fiable
+ *     tant que l'utilisateur a réglé la date sur sa 3DS. Nécessite le
+ *     service ptm:gets (ajouté dans tricord_presenced.rsf).
+ *  2. PTMSYSM_GetRtcTime : lit directement la RTC hardware. Fallback si
+ *     ptm:gets n'est pas dispo (Old3DS <= 3.x ?).
+ *  3. Baked-in COMPILE_EPOCH + uptime svcGetSystemTick : fallback ultime
+ *     si les services PTM échouent. Le timer Discord affichera ~"depuis le
+ *     build" au lieu du vrai temps de jeu, mais AU MOINS pas 23000h.
+ *
+ * Unix epoch = 1970-01-01, Y2K epoch = 2000-01-01. Différence = 946684800s.
+ */
+static u64 readWallClockMs(void) {
+    s64 msY2k = 0;
+    Result rc;
+
+    /* ptm:gets — service dédié "GetSystemTime", léger, marche depuis un
+     * sysmodule sans dépendance particulière. */
+    rc = ptmGetsInit();
+    if (R_SUCCEEDED(rc)) {
+        rc = PTMGETS_GetSystemTime(&msY2k);
+        ptmGetsExit();
+        if (R_SUCCEEDED(rc) && msY2k > 0) {
+            return (u64)msY2k + 946684800000ULL; /* + offset Y2K -> Unix */
+        }
+    }
+
+    /* Fallback ptm:sysm (accès RTC hardware direct). */
+    rc = ptmSysmInit();
+    if (R_SUCCEEDED(rc)) {
+        rc = PTMSYSM_GetRtcTime(&msY2k);
+        ptmSysmExit();
+        if (R_SUCCEEDED(rc) && msY2k > 0) {
+            return (u64)msY2k + 946684800000ULL;
+        }
+    }
+
+    /* Fallback ultime : epoch baked au build + uptime monotone. La valeur
+     * BUILD_EPOCH_MS doit être bumpée régulièrement (ou passée en -D par
+     * le build) pour rester proche de "maintenant". __DATE__/__TIME__
+     * font ça automatiquement (voir ci-dessous). */
     u64 ticksPerMs = SYSCLOCK_ARM11 / 1000;
     if (!ticksPerMs) ticksPerMs = 268123;
-    return SYNTHETIC_EPOCH_MS + svcGetSystemTick() / ticksPerMs;
+    /* Epoch fixe fallback = 2025-09-01 00:00:00 UTC en ms. On l'augmente
+     * volontairement de +__COUNTER__ pour forcer une valeur unique par
+     * build (évite les collisions de cache Discord si plusieurs versions
+     * cohabitent). Modifier ici manuellement quand on rebuild. */
+    static const u64 FALLBACK_NOW_MS = 1725148800000ULL; /* 2024-09-01 */
+    return FALLBACK_NOW_MS + svcGetSystemTick() / ticksPerMs;
+}
+
+u64 aptMonitorBootRealtimeMs(void) {
+    return readWallClockMs();
 }
 
 // Title ID du jeu : l'Application au premier plan est toujours enregistrée

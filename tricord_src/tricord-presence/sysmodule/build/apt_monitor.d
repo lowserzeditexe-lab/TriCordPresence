@@ -90,7 +90,8 @@ apt_monitor.o: \
  /opt/devkitpro/libctru/include/3ds/gdbhio_dev.h \
  /opt/devkitpro/libctru/include/3ds/3dslink.h \
  /app/tricord_src/tricord-presence/sysmodule/source/title_db.h \
- /app/tricord_src/tricord-presence/sysmodule/source/smdh_reader.h
+ /app/tricord_src/tricord-presence/sysmodule/source/smdh_reader.h \
+ /app/tricord_src/tricord-presence/sysmodule/source/log.h
 /app/tricord_src/tricord-presence/sysmodule/source/apt_monitor.h:
 /opt/devkitpro/libctru/include/3ds/types.h:
 /app/tricord_src/tricord-presence/sysmodule/source/presence_state.h:
@@ -182,3 +183,4 @@ apt_monitor.o: \
 /opt/devkitpro/libctru/include/3ds/3dslink.h:
 /app/tricord_src/tricord-presence/sysmodule/source/title_db.h:
 /app/tricord_src/tricord-presence/sysmodule/source/smdh_reader.h:
+/app/tricord_src/tricord-presence/sysmodule/source/log.h:

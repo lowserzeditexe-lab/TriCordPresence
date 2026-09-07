@@ -127,7 +127,7 @@ static void presence_state_init(presence_state_t *st) {
 int main(void) {
     // Sysmodules n'ont pas de sortie graphique — pas de gfxInit ici.
     logInit();
-    logPrintf("tricord_presenced start");
+    logPrintf("tricord_presenced start (build " __DATE__ " " __TIME__ ", SMDH+RichPresence v3)");
 
     titleDbInit();
 

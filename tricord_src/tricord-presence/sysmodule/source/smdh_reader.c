@@ -84,14 +84,16 @@ static void smdhPickBestName(const u8 *smdh, char *outShort, size_t shortSize,
 /* Ouvre l'archive SavedataAndContent (0x2345678a) pour <titleId>+<mediaType>
  * et lit le fichier "icon" (SMDH) via son chemin binaire ExeFS. */
 static Result smdhReadOne(u32 mediaType, u64 titleId, u8 *out, size_t outSize, u32 *outRead) {
-    /* Archive path binary : {tidLow, tidHigh, mediaType} (3 x u32).
-     * Format documenté sur 3dbrew "FS:OpenArchive" pour archive 0x2345678a. */
-    u32 archPath[3] = { (u32)(titleId & 0xFFFFFFFFULL), (u32)(titleId >> 32), mediaType };
+    /* Archive path binary : {tidLow, tidHigh, mediaType, 0x0} (4 x u32 = 16 octets).
+     * Format issu de FlagBrew/Checkpoint/3ds/source/smdh.cpp — l'entier de
+     * padding final est OBLIGATOIRE (sinon le kernel renvoie 0xC8804478
+     * "invalid path"). */
+    u32 archPath[4] = { (u32)(titleId & 0xFFFFFFFFULL), (u32)(titleId >> 32), mediaType, 0 };
     FS_Path aPath = { PATH_BINARY, sizeof(archPath), archPath };
 
     /* File path binary : {0, 0, 2 (type=ExeFS), 0x6E6F6369 ('icon' LE), 0}.
      * 0x2 = section ExeFS d'un NCCH, 0x6E6F6369 = "icon" en LE u32.
-     * Utilisé par ftpd, ftpony, FBI, GodMode9 pour lire le SMDH d'un titre. */
+     * Utilisé par ftpd, ftpony, FBI, GodMode9, Checkpoint pour lire le SMDH. */
     u32 filePath[5] = { 0, 0, 2, 0x6E6F6369, 0 };
     FS_Path fPath = { PATH_BINARY, sizeof(filePath), filePath };
 
@@ -107,34 +109,36 @@ static Result smdhReadOne(u32 mediaType, u64 titleId, u8 *out, size_t outSize, u
     return 0;
 }
 
-/* Détermine le media type probable d'après le premier octet du "high title id"
- * (0x00040000/0x00040002 = jeux : peuvent être en NAND si eShop, en SD si
- * eShop DL, ou sur cartouche pour un jeu retail). On tente donc dans l'ordre :
- * NAND -> SD -> Gamecard. */
+/* Détermine le media type probable d'après la catégorie du TID.
+ *   0x00040000 = jeu retail (souvent NAND si eShop, SD si téléchargé, GameCard sinon)
+ *   0x00040002 = démo (NAND)
+ *   0x00040010 = system app (NAND)
+ *   0x0004000E = update (NAND)
+ * Pour maximiser les chances de lire le SMDH d'un HOMEBREW installé via
+ * FBI (généralement en SD, TID category 0x00040000 avec un unique-id
+ * arbitraire), on essaie dans cet ordre : SD -> NAND -> Gamecard.
+ * Chaque essai fait un OpenFileDirectly (ne monte pas l'archive de manière
+ * persistante), donc coût minime.
+ */
 Result smdhReaderExtract(u64 titleId, smdh_info_t *out) {
     memset(out, 0, sizeof(*out));
 
-    /* Le SMDH complet fait 0x36C0 = 14016 octets. On alloue sur la pile
-     * (le thread principal du sysmodule a une pile de 0x4000 = 16 KiB
-     * définie par la stack de main.c / libctru ; on utilise ~14 KiB, OK).
-     * Alternative si problème : malloc + free. */
     static u8 smdh[0x36C0];
     u32 bytesRead = 0;
     Result rc = -1;
+    Result lastRc = 0;
 
-    /* MEDIATYPE_NAND=0, SD=1, GAME_CARD=2. On teste NAND et SD (le plus
-     * courant pour les jeux dématérialisés) puis carte de jeu. */
     static const u32 tryTypes[] = { MEDIATYPE_SD, MEDIATYPE_NAND, MEDIATYPE_GAME_CARD };
     for (unsigned i = 0; i < sizeof(tryTypes) / sizeof(tryTypes[0]); i++) {
         rc = smdhReadOne(tryTypes[i], titleId, smdh, sizeof(smdh), &bytesRead);
+        lastRc = rc;
         if (R_SUCCEEDED(rc) && bytesRead >= SMDH_ICON_LARGE_OFF + SMDH_ICON_LARGE_SIZE) {
-            /* Sanity: magic "SMDH" au début. */
             u32 magic = (u32)smdh[0] | ((u32)smdh[1] << 8) | ((u32)smdh[2] << 16) | ((u32)smdh[3] << 24);
             if (magic == SMDH_MAGIC) break;
             rc = -1;
         }
     }
-    if (R_FAILED(rc)) return rc;
+    if (R_FAILED(rc)) return lastRc; /* renvoie la dernière erreur pour log */
 
     smdhPickBestName(smdh, out->name, sizeof(out->name), out->publisher, sizeof(out->publisher));
     memcpy(out->large_icon, smdh + SMDH_ICON_LARGE_OFF, SMDH_ICON_LARGE_SIZE);

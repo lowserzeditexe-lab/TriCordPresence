@@ -16,6 +16,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 [ -f "$ROOT/tools/env.sh" ] && source "$ROOT/tools/env.sh"
 
+# Contournement watcher git : si des assets custom (icône/bannière du .cia)
+# existent dans /tmp/tricord_icon.png ou /tmp/tricord_banner.png, on les
+# utilise à la place de installer/assets/*.png (voir Makefile installer,
+# variables TRICORD_ICON_PNG / TRICORD_BANNER_PNG).
+[ -f /tmp/tricord_icon.png ]   && export TRICORD_ICON_PNG=/tmp/tricord_icon.png
+[ -f /tmp/tricord_banner.png ] && export TRICORD_BANNER_PNG=/tmp/tricord_banner.png
+
 if [ -z "${DEVKITARM:-}" ] || [ ! -x "$DEVKITARM/bin/arm-none-eabi-gcc" ]; then
     echo "ERREUR: DEVKITARM n'est pas défini / devkitARM introuvable." >&2
     echo "Installe devkitPro (dkp-pacman -S 3ds-dev 3ds-mbedtls 3ds-wslay 3ds-jansson) puis exporte DEVKITARM." >&2

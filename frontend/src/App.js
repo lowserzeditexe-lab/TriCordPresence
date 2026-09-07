@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
 import {
-  Gamepad2,
   Download,
   Copy,
   Check,
@@ -85,12 +84,12 @@ const Home = () => {
 
       <header className="top">
         <div className="brand">
-          <div className="brand-badge">
-            <Gamepad2 size={22} />
+          <div className="brand-badge brand-badge-logo">
+            <img src="/tricord-icon.png" alt="TriCord Presence" width={40} height={40} />
           </div>
           <div>
             <h1 className="brand-title">TriCord Presence</h1>
-            <p className="brand-sub">Installation sur 3DS via FBI &middot; QR code</p>
+            <p className="brand-sub">Rich Presence Discord pour Nintendo 3DS &middot; Install FBI par QR</p>
           </div>
         </div>
         <span className="pill" data-testid="version-pill">
