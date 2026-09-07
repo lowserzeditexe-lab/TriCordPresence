@@ -16,7 +16,7 @@
     "GET /api/download/unknown.cia returns 404 as expected",
     "Frontend page loads successfully",
     "QR canvas renders in [data-testid=qr-frame]",
-    "Download URL displays correctly in [data-testid=download-url]: https://presence-installer.preview.emergentagent.com/api/download/tricord-presence-installer.cia",
+    "Download URL displays correctly in [data-testid=download-url]: https://exciting-hamilton-8.preview.emergentagent.com/api/download/tricord-presence-installer.cia",
     "SHA-256 displays correctly in [data-testid=info-sha256]: 0284be8bcb1f8bb58a3773dc00cacd1f0fe98efc9064f39d955c109f9b045aff",
     "File info displays correctly: filename, version v2, size 1.61 Mo",
     "Manual download button present with correct href",

@@ -22,6 +22,19 @@ typedef struct {
     u64 title_id;
     char game_name[64]; // nom résolu localement (base title id -> nom),
                          // tronqué si besoin ; toujours NUL-terminé
+    // Timestamp Unix (ms) auquel ce titre a commencé à tourner. 0 = pas de
+    // timer. Discord affiche un chrono live "XX:XX écoulé" quand ce champ
+    // est non nul et présent dans activities[0].timestamps.start.
+    u64 started_at_ms;
+    // Type de média du titre (0=NAND, 1=SD, 2=game card). Nécessaire pour
+    // ouvrir la bonne archive et lire le SMDH (smdh_reader.c).
+    u32 media_type;
+    // Icône SMDH large (48x48 RGB565, ordre Z SMDH — cf 3dbrew "SMDH").
+    // has_icon = false si non extraite (titre absent / permission FS
+    // refusée / erreur I/O). Le sysmodule POST ce buffer au backend via
+    // POST /api/icons/<TID> qui le convertit en PNG.
+    bool has_icon;
+    u8   icon_rgb565[48 * 48 * 2];
 } presence_state_t;
 
 static inline bool presenceStateEquals(const presence_state_t *a, const presence_state_t *b) {

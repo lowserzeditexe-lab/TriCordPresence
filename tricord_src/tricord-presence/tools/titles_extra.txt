@@ -1,0 +1,42 @@
+# titles_extra.txt — Entrées manuelles pour titles.txt
+# Format : <TitleID 16 hex majuscules><TAB><nom>
+# Les # sont ignorés. Ces entrées sont fusionnées en fin de génération
+# (tools/gen_titles_db.py) : elles ÉCRASENT les entrées 3dsdb en cas de
+# doublon.
+#
+# Utilise ce fichier pour :
+#   - ajouter des homebrew (FBI, GodMode9, Anemone3DS, Universal-Updater...)
+#   - corriger un nom mal orthographié
+#   - ajouter un titre absent de 3dsdb (démos rares, prototypes, dev builds)
+#
+# Après édition : régénère titles.txt via
+#   REFRESH_TITLES=1 ./build.sh
+# ou directement : python3 tools/gen_titles_db.py installer/romfs/titles.txt
+
+# Homebrew populaires
+000400000F800100	FBI
+000400000F900000	GodMode9
+0004000000073E00	Anemone3DS
+0004000007116300	Universal-Updater
+000400000EB00000	Checkpoint
+0004000007800000	Homebrew Launcher
+
+# System apps (00040010) fréquentes
+0004001000020000	System Settings
+0004001000021000	System Settings
+0004001000022000	System Settings
+0004001000023000	System Settings
+0004001000024000	System Settings
+0004001000025000	System Settings
+0004001000026000	System Settings
+0004001000027000	System Settings
+0004001000028000	System Settings
+0004003000008F02	HOME Menu
+0004003000008202	HOME Menu
+0004003000009802	HOME Menu (USA)
+0004003000008A02	HOME Menu (EUR)
+0004003000009802	HOME Menu (USA)
+
+# Titres TriCord Presence (exclus à l'exécution mais présents ici pour info)
+000400000F000200	TriCord Presence Installer
+000401300F000102	TriCord Presence Sysmodule

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "title_db.h"
+#include "smdh_reader.h"
 
 /*
  * Accès brut au service APT (hébergé par NS) depuis un sysmodule.
@@ -176,8 +177,51 @@ Result aptMonitorGetCurrentState(presence_state_t *out) {
 
     out->kind = PRESENCE_KIND_IN_GAME;
     out->title_id = titleId;
-    titleDbLookup(titleId, out->game_name, sizeof(out->game_name));
+    /* Résolution du nom : (1) SMDH du titre (source de vérité 3DS, marche
+     * pour homebrew + JP + toutes régions), (2) titles.txt (fallback offline
+     * si SMDH indisponible ou permission FS refusée), (3) fallback hex.
+     * L'icône large (48x48 RGB565) est capturée en même temps que le nom
+     * quand le SMDH est lisible, et sera POSTée au backend par la Gateway.
+     * NB: game_name = 64 octets (contrainte IPC vers le plugin overlay,
+     * cf presence_state.h) ; on tronque les noms SMDH plus longs (rare :
+     * la plupart des noms 3DS tiennent en < 40 caractères). */
+    smdh_info_t smdh;
+    Result smdhRc = smdhReaderExtract(titleId, &smdh);
+    if (R_SUCCEEDED(smdhRc) && smdh.name[0]) {
+        size_t nl = strlen(smdh.name);
+        if (nl >= sizeof(out->game_name)) nl = sizeof(out->game_name) - 1;
+        memcpy(out->game_name, smdh.name, nl);
+        out->game_name[nl] = '\0';
+        if (smdh.has_icon) {
+            memcpy(out->icon_rgb565, smdh.large_icon, sizeof(out->icon_rgb565));
+            out->has_icon = true;
+        }
+    } else {
+        titleDbLookup(titleId, out->game_name, sizeof(out->game_name));
+    }
+    /* Timestamp start : millisecondes Unix. La 3DS n'ayant pas d'horloge
+     * fiable (RTC non synchronisée, cf tls_verify_cb), on utilise plutôt
+     * un timestamp Unix fixé à "il y a X secondes" au moment du changement
+     * de titre. En pratique Discord affiche un chrono "XX:XX écoulé" à
+     * partir de la valeur — le temps affiché est correct tant qu'on reste
+     * sur le même titre, ce qui est notre besoin ici. */
+    extern u64 aptMonitorBootRealtimeMs(void); /* défini plus bas */
+    out->started_at_ms = aptMonitorBootRealtimeMs();
     return 0;
+}
+
+/* Renvoie un timestamp "monotone" en millisecondes fondé sur svcGetSystemTick
+ * (compteur ARM11 en TCU/SYSCLOCK_ARM11 tick, redémarré à chaque boot 3DS).
+ * On ajoute un offset "epoch synthétique" (Unix ms) constant pour que
+ * Discord affiche un timer positif — la valeur absolue n'a pas d'importance,
+ * seule la différence "maintenant - started_at" compte pour le chrono. */
+u64 aptMonitorBootRealtimeMs(void) {
+    /* Constante = 2024-01-01T00:00:00Z en ms Unix : tout timestamp start
+     * postérieur est cohérent pour Discord. */
+    static const u64 SYNTHETIC_EPOCH_MS = 1704067200000ULL;
+    u64 ticksPerMs = SYSCLOCK_ARM11 / 1000;
+    if (!ticksPerMs) ticksPerMs = 268123;
+    return SYNTHETIC_EPOCH_MS + svcGetSystemTick() / ticksPerMs;
 }
 
 // Title ID du jeu : l'Application au premier plan est toujours enregistrée

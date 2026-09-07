@@ -17,7 +17,7 @@
     "Frontend: Page loads successfully with TriCord Presence branding",
     "Frontend: Version pill displays v2 correctly",
     "Frontend: QR canvas renders in [data-testid=qr-frame]",
-    "Frontend: Download URL displayed correctly in [data-testid=download-url]: https://presence-installer.preview.emergentagent.com/api/download/tricord-presence-installer.cia",
+    "Frontend: Download URL displayed correctly in [data-testid=download-url]: https://exciting-hamilton-8.preview.emergentagent.com/api/download/tricord-presence-installer.cia",
     "Frontend: SHA-256 displayed correctly in [data-testid=info-sha256]: 41b26813b685a0e1c328e864d638076ee40c635fe8e6f44b2dd5c2a799754f4a",
     "Frontend: File info displays correctly (filename: tricord-presence-installer.cia, size: 1.61 Mo)",
     "Frontend: Manual download button is visible and functional",

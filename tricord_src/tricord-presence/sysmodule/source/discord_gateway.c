@@ -129,6 +129,18 @@ typedef struct {
 } gw_t;
 
 static char s_token[256];
+/* Configuration lue au démarrage depuis config.txt (voir loadConfig()).
+ *  - s_appId       : Discord Application ID à mettre dans activity.application_id
+ *                    (nécessaire pour que Discord aille chercher les assets de
+ *                    l'app et affiche son nom en header au lieu du fallback "?").
+ *  - s_backendUrl  : base URL du backend (sans slash final). Le sysmodule y
+ *                    POST l'icône SMDH via /api/icons/<TID> pour que Discord
+ *                    puisse l'afficher via assets.large_image (mp:external URL).
+ *  - s_iconTIDUploaded : dernier TID pour lequel l'icône a été POSTée au
+ *                    backend, pour éviter de re-uploader à chaque tick. */
+static char s_appId[64];
+static char s_backendUrl[256];
+static u64  s_iconTIDUploaded = 0;
 static gw_t s_gw;
 static volatile bool s_threadRunning = false;
 
@@ -176,6 +188,200 @@ static Result loadTokenFromConfig(char *out, size_t outSize) {
     }
     fclose(f);
     return out[0] ? 0 : -1;
+}
+
+/* Charge application_id / backend_base_url depuis config.txt. Retombe sur
+ * des valeurs par défaut compilées (Discord app "TriCord 3DS" + backend
+ * de démo) si config.txt n'est pas présent. */
+#define DEFAULT_APP_ID       "1546529994421829693"
+#define DEFAULT_BACKEND_URL  "https://deafbfd3-a99b-4179-965c-fe617d9edeab.preview.emergentagent.com"
+
+static void loadConfigExtras(void) {
+    snprintf(s_appId, sizeof(s_appId), "%s", DEFAULT_APP_ID);
+    snprintf(s_backendUrl, sizeof(s_backendUrl), "%s", DEFAULT_BACKEND_URL);
+    FILE *f = fopen(GW_CONFIG_PATH, "r");
+    if (!f) return;
+    char line[512];
+    while (fgets(line, sizeof(line), f)) {
+        size_t len = strlen(line);
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r' || line[len - 1] == ' ')) line[--len] = '\0';
+        if (len == 0 || line[0] == '#') continue;
+        if (strncmp(line, "application_id=", 15) == 0) {
+            snprintf(s_appId, sizeof(s_appId), "%s", line + 15);
+        } else if (strncmp(line, "backend_base_url=", 17) == 0) {
+            const char *u = line + 17;
+            /* Strip trailing slash. */
+            size_t ul = strlen(u);
+            while (ul > 0 && u[ul - 1] == '/') { ((char *)u)[--ul] = '\0'; }
+            snprintf(s_backendUrl, sizeof(s_backendUrl), "%s", u);
+        }
+    }
+    fclose(f);
+}
+
+/* Forward declarations pour httpsPostBinary — les définitions réelles
+ * sont plus bas dans le fichier (partie "Socket + TLS" de la Gateway). */
+static int bio_send(void *ctx, const unsigned char *buf, size_t len);
+static int bio_recv(void *ctx, unsigned char *buf, size_t len);
+static int wait_fd(int fd, bool for_write, int timeout_ms);
+
+/* --- HTTPS POST minimaliste pour envoyer l'icône SMDH au backend --------
+ * Reprend la stack mbedtls + CA bundle utilisée par la Gateway. Séparé de
+ * gw_t car la connexion est one-shot (POST + Connection: close). Retourne
+ * 0 sur succès (HTTP 2xx), négatif sinon. Bloquant, ~2 s max en pratique. */
+static int httpsPostBinary(const char *host, int port, const char *path,
+                           const u8 *body, size_t bodyLen) {
+    if (!host || !host[0]) return -1;
+
+    /* Résolution DNS + TCP */
+    struct hostent *he = gethostbyname(host);
+    if (!he || !he->h_addr_list[0]) { GW_LOG("iconPost DNS échoué (%s)", host); return -2; }
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) return -3;
+    struct sockaddr_in sa; memset(&sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    sa.sin_port   = htons(port);
+    memcpy(&sa.sin_addr, he->h_addr_list[0], sizeof(sa.sin_addr));
+    if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) != 0) {
+        GW_LOG("iconPost TCP échoué (%s:%d)", host, port);
+        close(fd); return -4;
+    }
+
+    /* Stack mbedtls (locale, libérée à la sortie) */
+    mbedtls_ssl_context     ssl;
+    mbedtls_ssl_config      conf;
+    mbedtls_entropy_context ent;
+    mbedtls_ctr_drbg_context drbg;
+    mbedtls_x509_crt        ca;
+    mbedtls_ssl_init(&ssl);
+    mbedtls_ssl_config_init(&conf);
+    mbedtls_entropy_init(&ent);
+    mbedtls_ctr_drbg_init(&drbg);
+    mbedtls_x509_crt_init(&ca);
+
+    int rc = -10;
+    const char *pers = "tricord_iconpost";
+    if (mbedtls_ctr_drbg_seed(&drbg, mbedtls_entropy_func, &ent,
+                              (const unsigned char *)pers, strlen(pers)) != 0) goto out;
+    if (mbedtls_ssl_config_defaults(&conf, MBEDTLS_SSL_IS_CLIENT,
+                                    MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0) goto out;
+    if (mbedtls_x509_crt_parse(&ca, (const unsigned char *)DISCORD_CA_BUNDLE, sizeof(DISCORD_CA_BUNDLE)) < 0) goto out;
+    mbedtls_ssl_conf_ca_chain(&conf, &ca, NULL);
+    mbedtls_ssl_conf_authmode(&conf, MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_verify(&conf, tls_verify_cb, NULL); /* tolère l'horloge RTC */
+    mbedtls_ssl_conf_rng(&conf, mbedtls_ctr_drbg_random, &drbg);
+    if (mbedtls_ssl_setup(&ssl, &conf) != 0) goto out;
+    mbedtls_ssl_set_hostname(&ssl, host);
+    mbedtls_ssl_set_bio(&ssl, &fd, bio_send, bio_recv, NULL);
+
+    u64 deadline = gw_now_ms() + 15000;
+    int hr;
+    while ((hr = mbedtls_ssl_handshake(&ssl)) != 0) {
+        if (hr == MBEDTLS_ERR_SSL_WANT_READ || hr == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (gw_now_ms() > deadline) { GW_LOG("iconPost TLS timeout"); rc = -11; goto out; }
+            wait_fd(fd, hr == MBEDTLS_ERR_SSL_WANT_WRITE, 500);
+            continue;
+        }
+        GW_LOG("iconPost handshake échoué: -0x%04X", (unsigned)-hr); rc = -12; goto out;
+    }
+
+    /* Requête HTTP en 2 passes : headers puis body */
+    char headers[512];
+    int hlen = snprintf(headers, sizeof(headers),
+        "POST %s HTTP/1.1\r\n"
+        "Host: %s\r\n"
+        "Content-Type: application/octet-stream\r\n"
+        "Content-Length: %zu\r\n"
+        "Connection: close\r\n"
+        "User-Agent: tricord-presenced/2\r\n\r\n",
+        path, host, bodyLen);
+
+    #define SSL_WRITE_ALL(buf, len) do { \
+        size_t written = 0; \
+        while (written < (size_t)(len)) { \
+            int w = mbedtls_ssl_write(&ssl, (const unsigned char *)(buf) + written, (len) - written); \
+            if (w == MBEDTLS_ERR_SSL_WANT_READ || w == MBEDTLS_ERR_SSL_WANT_WRITE) { \
+                if (gw_now_ms() > deadline) { rc = -13; goto out; } \
+                wait_fd(fd, w == MBEDTLS_ERR_SSL_WANT_WRITE, 500); continue; \
+            } \
+            if (w <= 0) { GW_LOG("iconPost write err %d", w); rc = -14; goto out; } \
+            written += (size_t)w; \
+        } \
+    } while (0)
+
+    SSL_WRITE_ALL(headers, hlen);
+    SSL_WRITE_ALL(body, bodyLen);
+    #undef SSL_WRITE_ALL
+
+    /* Lecture réponse : on veut juste "HTTP/1.1 2xx" dans les premiers octets */
+    char resp[128] = {0};
+    size_t rlen = 0;
+    while (rlen < sizeof(resp) - 1) {
+        int r = mbedtls_ssl_read(&ssl, (unsigned char *)resp + rlen, sizeof(resp) - 1 - rlen);
+        if (r == MBEDTLS_ERR_SSL_WANT_READ || r == MBEDTLS_ERR_SSL_WANT_WRITE) {
+            if (gw_now_ms() > deadline) { rc = -15; goto out; }
+            wait_fd(fd, r == MBEDTLS_ERR_SSL_WANT_WRITE, 500);
+            continue;
+        }
+        if (r <= 0) break;
+        rlen += (size_t)r;
+        if (rlen >= 12) break; /* on a lu jusqu'à "HTTP/1.1 XXX" */
+    }
+    resp[rlen] = '\0';
+    if (strncmp(resp, "HTTP/1.1 2", 10) == 0 || strncmp(resp, "HTTP/1.0 2", 10) == 0) {
+        rc = 0;
+    } else {
+        GW_LOG("iconPost réponse inattendue: %.20s", resp);
+        rc = -16;
+    }
+
+out:
+    mbedtls_ssl_close_notify(&ssl);
+    mbedtls_ssl_free(&ssl);
+    mbedtls_ssl_config_free(&conf);
+    mbedtls_x509_crt_free(&ca);
+    mbedtls_ctr_drbg_free(&drbg);
+    mbedtls_entropy_free(&ent);
+    close(fd);
+    return rc;
+}
+
+/* Extrait host + port + path de base à partir de s_backendUrl. */
+static void backendSplitUrl(const char *url, char *outHost, size_t hostSize, int *outPort) {
+    *outPort = 443;
+    const char *p = url;
+    if (strncmp(p, "https://", 8) == 0) { p += 8; *outPort = 443; }
+    else if (strncmp(p, "http://", 7) == 0) { p += 7; *outPort = 80; }
+    /* jusqu'au premier '/' ou ':' */
+    size_t i = 0;
+    while (*p && *p != '/' && *p != ':' && i + 1 < hostSize) outHost[i++] = *p++;
+    outHost[i] = '\0';
+    if (*p == ':') {
+        *outPort = atoi(p + 1);
+    }
+}
+
+/* Best-effort : upload l'icône SMDH du titre au backend. Idempotent
+ * (n'upload que si le TID a changé ou pas encore uploadé). Silencieux en
+ * cas d'échec (Discord fallback sur l'icône par défaut de l'app). */
+static void tryUploadIcon(const presence_state_t *st) {
+    if (!st->has_icon || !s_backendUrl[0]) return;
+    if (s_iconTIDUploaded == st->title_id) return;
+
+    char host[128]; int port;
+    backendSplitUrl(s_backendUrl, host, sizeof(host), &port);
+    if (!host[0]) return;
+
+    char path[64];
+    snprintf(path, sizeof(path), "/api/icons/%016llX", (unsigned long long)st->title_id);
+
+    int rc = httpsPostBinary(host, port, path, st->icon_rgb565, sizeof(st->icon_rgb565));
+    if (rc == 0) {
+        s_iconTIDUploaded = st->title_id;
+        GW_LOG("Icône SMDH POSTée: %s%s (%zu octets)", s_backendUrl, path, sizeof(st->icon_rgb565));
+    } else {
+        GW_LOG("Icône SMDH POST échoué rc=%d (Discord utilisera l'icône de l'app par défaut)", rc);
+    }
 }
 
 /* Choisit la source du token pour l'IDENTIFY initial. Voir commentaire
@@ -543,17 +749,61 @@ static bool send_json(gw_t *g, json_t *root) {
 #define GW_IDLE_TEXT "Sur le menu HOME"
 
 /* Payload "d" d'Update Presence (op 3) :
- *  - en jeu   : status "online" + activité type 0 -> "Joue à <jeu>"
+ *  - en jeu   : status "online" + activité type 0 avec application_id, details
+ *    (nom du jeu), state ("Nintendo 3DS"), timestamps.start pour le chrono
+ *    et assets.large_image = URL de l'icône SMDH POSTée au backend (Discord
+ *    Media Proxy la récupère via le préfixe mp:external/).
  *  - menu HOME: status "idle" + statut personnalisé (type 4, champ "state",
  *    seul type de texte libre affiché pour un compte utilisateur) ->
  *    "Sur le menu HOME". Remplace le statut perso de l'utilisateur tant que
  *    le sysmodule tourne (voir RAPPORT.md).
  *  - inconnu  : status "online", aucune activité. */
+static json_t *build_activity_in_game(const presence_state_t *st) {
+    json_t *act = json_object();
+    /* Champs de base */
+    json_object_set_new(act, "name", json_string(st->game_name));
+    json_object_set_new(act, "type", json_integer(0));
+    json_object_set_new(act, "details", json_string(st->game_name));
+    json_object_set_new(act, "state", json_string("Nintendo 3DS"));
+    /* application_id : nécessaire pour que Discord aille chercher les assets
+     * et affiche le nom de l'app en header. Doit être une string. */
+    if (s_appId[0]) {
+        json_object_set_new(act, "application_id", json_string(s_appId));
+    }
+    /* Timestamps : Discord affiche un compteur "XX:XX écoulé" quand start
+     * est présent. Voir apt_monitor.c pour le calcul du timestamp. */
+    if (st->started_at_ms) {
+        json_t *ts = json_object();
+        json_object_set_new(ts, "start", json_integer((json_int_t)st->started_at_ms));
+        json_object_set_new(act, "timestamps", ts);
+    }
+    /* Assets : le sysmodule POST l'icône SMDH au backend via /api/icons/<TID>
+     * juste avant l'envoi de la présence (tryUploadIcon dans la boucle
+     * réseau). On ne renseigne assets.large_image QUE si l'upload a réussi
+     * pour ce titre : sinon Discord fetch une 404 et affiche un placeholder
+     * cassé. Le format mp:external/https/<host>/<path> est celui du Media
+     * Proxy Discord (fetch + re-serve depuis le CDN). */
+    if (st->has_icon && s_backendUrl[0] && s_iconTIDUploaded == st->title_id) {
+        char large[512];
+        const char *host = s_backendUrl;
+        const char *scheme = "https";
+        if (strncmp(host, "https://", 8) == 0) host += 8;
+        else if (strncmp(host, "http://", 7) == 0) { host += 7; scheme = "http"; }
+        snprintf(large, sizeof(large), "mp:external/%s/%s/api/icons/%016llX.png",
+                 scheme, host, (unsigned long long)st->title_id);
+        json_t *assets = json_object();
+        json_object_set_new(assets, "large_image", json_string(large));
+        json_object_set_new(assets, "large_text", json_string(st->game_name));
+        json_object_set_new(act, "assets", assets);
+    }
+    return act;
+}
+
 static json_t *build_presence_d(const presence_state_t *st) {
     json_t *activities = json_array();
     const char *status = "online";
     if (st && st->kind == PRESENCE_KIND_IN_GAME) {
-        json_array_append_new(activities, json_pack("{s:s, s:i}", "name", st->game_name, "type", 0));
+        json_array_append_new(activities, build_activity_in_game(st));
     } else if (st && st->kind == PRESENCE_KIND_IDLE) {
         status = "idle";
         json_array_append_new(activities, json_pack("{s:s, s:i, s:s}", "name", "Custom Status", "type", 4, "state", GW_IDLE_TEXT));
@@ -751,7 +1001,15 @@ static void run_session(gw_t *g) {
             if (dirty && now - s_lastPresenceSentAt >= GW_PRESENCE_MIN_INTERVAL_MS) s_presenceDirty = false;
             else dirty = false;
             gw_mutex_unlock(&s_presenceLock);
-            if (dirty) send_presence_update(g, &st);
+            if (dirty) {
+                /* Upload synchro de l'icône SMDH avant d'envoyer la présence :
+                 * ainsi Discord ne fetch le mp:external qu'après que le
+                 * backend ait le PNG à servir. Best-effort : en cas d'échec
+                 * réseau ou permission FS, l'icône par défaut de l'app
+                 * Discord (uploadée dans le dev portal) est utilisée. */
+                tryUploadIcon(&st);
+                send_presence_update(g, &st);
+            }
         }
         if (wslay_event_want_write(g->ws)) wslay_event_send(g->ws);
     }
@@ -825,6 +1083,9 @@ Result discordGatewayInit(void) {
     memset(&s_gw, 0, sizeof(s_gw));
     s_gw.fd = -1;
     gw_mutex_init(&s_presenceLock);
+
+    loadConfigExtras(); /* application_id + backend_base_url (défauts embarqués) */
+    GW_LOG("Rich Presence config : app_id=%s backend=%s", s_appId, s_backendUrl);
 
     Result rc = accountBridgeInit();
     if (R_FAILED(rc)) {
